@@ -138,7 +138,7 @@ class MarkupSitemap extends WireData implements Module
                 }
             }
             // Add the hook to process and render the sitemap.
-            $this->addHookBefore('ProcessPageView::pageNotFound', $this, 'render');
+            $this->addHookAfter('ProcessPageView::pageNotFound', $this, 'render');
         }
 
         // Add a hook that moves the XML Sitemap fields to the Settings tab
@@ -201,8 +201,7 @@ class MarkupSitemap extends WireData implements Module
             $markupCache->save($output);
         }
         header('Content-Type: text/xml', true, 200);
-        print $output;
-        exit;
+        $event->return = $output;
     }
 
     /**
