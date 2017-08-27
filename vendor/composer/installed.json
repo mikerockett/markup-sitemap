@@ -1,0 +1,49 @@
+[
+    {
+        "name": "thepixeldeveloper/sitemap",
+        "version": "4.5.2",
+        "version_normalized": "4.5.2.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/ThePixelDeveloper/Sitemap.git",
+            "reference": "cde221cbd76035328dbcd35caaf000ad9f7d8174"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/ThePixelDeveloper/Sitemap/zipball/cde221cbd76035328dbcd35caaf000ad9f7d8174",
+            "reference": "cde221cbd76035328dbcd35caaf000ad9f7d8174",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.6.0"
+        },
+        "require-dev": {
+            "phpspec/phpspec": "^2.4"
+        },
+        "time": "2017-07-26T13:35:41+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Thepixeldeveloper\\Sitemap\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Mathew Davies",
+                "email": "thepixeldeveloper@googlemail.com",
+                "homepage": "http://mathew-davies.co.uk",
+                "role": "Developer"
+            }
+        ],
+        "description": "XML sitemap generation",
+        "keywords": [
+            "Sitemap",
+            "xml"
+        ]
+    }
+]
