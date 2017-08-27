@@ -35,11 +35,14 @@ class MarkupSitemapConfig extends ModuleConfig
         // Gather a list of templates
         $allTemplates = $this->templates;
         foreach ($allTemplates as $template) {
-            // exclude system fields
+            // Exclude system templates
             if ($template->flags & Template::flagSystem) {
                 continue;
             }
-            $templates[] = $template;
+            // Also exclude the home template
+            if ($template->id !== $this->pages->get(1)->template->id) {
+                $templates[] = $template;
+            }
         }
 
         if ($this->input->post->submit_save_module) {
