@@ -1,9 +1,20 @@
 <?php
 
+/**
+ * Sitemap for ProcessWire
+ *
+ * Module class
+ *
+ * @author Mike Rockett
+ * @copyright 2017
+ * @license MIT
+ */
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Thepixeldeveloper\Sitemap\Output;
 use Thepixeldeveloper\Sitemap\Subelements\Link;
+use Thepixeldeveloper\Sitemap\Subelements\Image;
 use Thepixeldeveloper\Sitemap\Url;
 use Thepixeldeveloper\Sitemap\Urlset;
 
@@ -66,25 +77,25 @@ class MarkupSitemap extends WireData implements Module
     public function ___install()
     {
         $this->createField('FieldsetOpen', 'sitemap_fieldset', [
-            'label' => $this->_('XML Sitemap'),
-            'description' => 'These options are specific to MarkupSitemap, and allow you to select whether or not this Page (and, optionally, its children) should be rendered in the sitemap.',
+            'label' => $this->_('Sitemap'),
+            'description' => 'These options are specific to Sitemap, and allow you to select whether or not this Page (and, optionally, its children) should be rendered in the sitemap.',
             'icon' => 'sitemap',
             'collapsed' => Inputfield::collapsedBlank,
         ], true);
 
-        $this->createField('FieldsetClose', 'sitemap_fieldset_END', [
-            'label' => $this->_('Close XML Sitemap'),
-        ], true);
-
         $this->createField('Checkbox', 'sitemap_ignore_page', [
             'label' => $this->_('Exclude Page'),
-            'label2' => $this->_('Exclude this Page from being rendered in the XML sitemap'),
+            'label2' => $this->_('Do not render include this Page in sitemap.xml'),
         ], true);
 
         $this->createField('Checkbox', 'sitemap_ignore_children', [
             'label' => $this->_('Exclude Children'),
-            'label2' => $this->_('Exclude this Page’s children from being rendered in the XML sitemap'),
+            'label2' => $this->_('Do not include this Page’s children (if any) in sitemap.xml'),
             'notes' => $this->_('This option is independent of the option above which, if not checked, means that only this page’s children will be excluded when this option is checked.'),
+        ], true);
+
+        $this->createField('FieldsetClose', 'sitemap_fieldset_END', [
+            'label' => $this->_('Close Sitemap'),
         ], true);
     }
 
@@ -209,6 +220,7 @@ class MarkupSitemap extends WireData implements Module
      */
     protected function addUrls($page)
     {
+
         // Add this page
         if ($page->viewable() && ($page->sitemap_ignore_page == false || $page->path === '/')) {
             $url = new Url($page->httpUrl);
@@ -224,6 +236,37 @@ class MarkupSitemap extends WireData implements Module
                     $url->addSubElement($alternateLink);
                 }
             }
+
+            // Check for images to add to this entry
+            foreach ($this->sitemap_image_fields as $imageFieldName) {
+                $page->of(false);
+                $imageField = $page->$imageFieldName;
+                if (!$imageField) continue;
+                foreach ($imageField as $image) {
+                    $imageLink = new Image($image->httpUrl);
+                    foreach ([
+                        'Caption' => 'description',
+                        'License' => 'license',
+                        'Title' => 'title',
+                        'GeoLocation' => 'geo|location|geolocation',
+                    ] as $imageMetaMethod => $imageMetaValues) {
+                        foreach (explode('|', $imageMetaValues) as $imageMetaValue) {
+                            if ($imageMetaMethod === 'License') {
+                                if (!filter_var($image->$imageMetaValue, FILTER_VALIDATE_URL)) {
+                                    continue;
+                                }
+                            }
+                            if ($image->$imageMetaValue) {
+                                $setImageLinkMeta = "set{$imageMetaMethod}";
+                                $imageLink->{$setImageLinkMeta}($image->$imageMetaValue);
+                            }
+                        }
+                    }
+                    $url->addSubElement($imageLink);
+                }
+            }
+
+            // Finally, add the url to the set
             $this->urlSet->addUrl($url);
         }
 

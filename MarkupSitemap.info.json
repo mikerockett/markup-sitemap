@@ -1,7 +1,7 @@
 {
     "title": "Sitemap",
     "summary": "Renders a sitemap for your ProcessWire powered site. Supports multi-language and multi-site. Adapted from MarkupSitemapXML.",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "permanent": false,
     "autoload": true,
     "singular": true

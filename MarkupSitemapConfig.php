@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Sitemap for ProcessWire
+ *
+ * Module config class
+ *
+ * @author Mike Rockett
+ * @copyright 2017
+ * @license MIT
+ */
+
 class MarkupSitemapConfig extends ModuleConfig
 {
     /**
@@ -45,8 +55,9 @@ class MarkupSitemapConfig extends ModuleConfig
             }
         }
 
+        // Add/remove sitemap fields from templates
         if ($this->input->post->submit_save_module) {
-            $includedTemplates = (array) $this->input->post->includeTemplates;
+            $includedTemplates = (array) $this->input->post->sitemap_include_templates;
             foreach ($templates as $template) {
                 if (in_array($template->name, $includedTemplates)) {
                     if ($template->hasField('sitemap_fieldset')) {
@@ -54,16 +65,12 @@ class MarkupSitemapConfig extends ModuleConfig
                     } else {
                         $sitemapFields = self::getDefaultFields();
                         unset($sitemapFields[count($sitemapFields) - 1]);
-
                         foreach ($this->fields as $sitemapField) {
                             if (preg_match('%^sitemap_(.*)%Uis', $sitemapField->name) && !in_array($sitemapField->name, self::getDefaultFields())) {
                                 array_push($sitemapFields, $sitemapField->name);
                             }
                         }
-
                         array_push($sitemapFields, 'sitemap_fieldset_END');
-
-                        //add fields to template
                         foreach ($sitemapFields as $templateField) {
                             $template->fields->add($this->fields->get($templateField));
                         }
@@ -87,18 +94,33 @@ class MarkupSitemapConfig extends ModuleConfig
         // Start inputfields
         $inputfields = parent::getInputfields();
 
-        // Add the template-selector fieldset
+        // Add the template-selector field
         $includeTemplatesField = $this->buildInputField('InputfieldAsmSelect', [
-            'name+id' => 'includeTemplates',
+            'name+id' => 'sitemap_include_templates',
             'label' => 'Templates with Sitemap options',
             'description' => $this->_('Select which Templates (and, therefore, all their Pages) can have individual Sitemap options. Such options are saved on a per-page basis.'),
             'notes' => 'If you remove any templates from this list, any data saved for Pages using those templates will be discarded when you save this configuration. Please use with caution.',
             'icon' => 'cubes',
         ]);
         foreach ($templates as $template) {
-            $includeTemplatesField->addOption($template->name);
+            $includeTemplatesField->addOption($template->name, $template->get('label|name'));
         }
         $inputfields->add($includeTemplatesField);
+
+        // Add the image-field-selector field
+        $imageFieldsField = $this->buildInputField('InputfieldAsmSelect', [
+            'name+id' => 'sitemap_image_fields',
+            'label' => $this->_('Image Fields'),
+            'description' => $this->_('If you’d like to include images in your sitemap (for somewhat enhanced Google Images support), specify the image fields you’d like MarkupSitemap to traverse and include. The sitemap will include images for every Page that uses the field(s) you select below.'),
+            'icon' => 'image',
+        ]);
+        foreach ($this->fields as $field) {
+            $fieldType = $field->get('type')->className;
+            if ($fieldType === 'FieldtypeImage') {
+                $imageFieldsField->addOption($field->name, "{$field->get('label|name')} (used in {$field->numFieldgroups()} templates)");
+            }
+        }
+        $inputfields->add($imageFieldsField);
 
         return $inputfields;
     }
