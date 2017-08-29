@@ -72,28 +72,37 @@ class MarkupSitemap extends WireData implements Module
 
     /**
      * Install module
+     * 1) Install MarkupCache
+     * 2) Install new system fields
      * @return void
      */
     public function ___install()
     {
+        // Install MarkupCache
+        $this->modules->{self::MARKUP_CACHE_MODULE};
+
+        // Create Fieldset (open)
         $this->createField('FieldsetOpen', 'sitemap_fieldset', [
             'label' => $this->_('Sitemap'),
-            'description' => 'These options are specific to Sitemap, and allow you to select whether or not this Page (and, optionally, its children) should be rendered in the sitemap.',
+            'description' => $this->_('These options are specific to Sitemap, and allow you to select whether or not this Page (and, optionally, its children) should be rendered in the sitemap.'),
             'icon' => 'sitemap',
             'collapsed' => Inputfield::collapsedBlank,
         ], true);
 
+        // Create ignore-page field
         $this->createField('Checkbox', 'sitemap_ignore_page', [
             'label' => $this->_('Exclude Page'),
             'label2' => $this->_('Do not render include this Page in sitemap.xml'),
         ], true);
 
+        // Create ignore-children field
         $this->createField('Checkbox', 'sitemap_ignore_children', [
             'label' => $this->_('Exclude Children'),
             'label2' => $this->_('Do not include this Page’s children (if any) in sitemap.xml'),
             'notes' => $this->_('This option is independent of the option above which, if not checked, means that only this page’s children will be excluded when this option is checked.'),
         ], true);
 
+        // Create Fieldset (close)
         $this->createField('FieldsetClose', 'sitemap_fieldset_END', [
             'label' => $this->_('Close Sitemap'),
         ], true);

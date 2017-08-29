@@ -55,8 +55,13 @@ class MarkupSitemapConfig extends ModuleConfig
             }
         }
 
-        // Add/remove sitemap fields from templates
+        // If saving ...
         if ($this->input->post->submit_save_module) {
+            // Remove sitemap cache
+            if ($this->removeSitemapCache()) {
+                $this->message($this->_('Removed sitemap cache'));
+            }
+            // Add/remove sitemap fields from templates
             $includedTemplates = (array) $this->input->post->sitemap_include_templates;
             foreach ($templates as $template) {
                 if (in_array($template->name, $includedTemplates)) {
@@ -97,10 +102,11 @@ class MarkupSitemapConfig extends ModuleConfig
         // Add the template-selector field
         $includeTemplatesField = $this->buildInputField('InputfieldAsmSelect', [
             'name+id' => 'sitemap_include_templates',
-            'label' => 'Templates with Sitemap options',
-            'description' => $this->_('Select which Templates (and, therefore, all their Pages) can have individual Sitemap options. Such options are saved on a per-page basis.'),
-            'notes' => 'If you remove any templates from this list, any data saved for Pages using those templates will be discarded when you save this configuration. Please use with caution.',
+            'label' => 'Templates with sitemap-ignore options',
+            'description' => $this->_('Select which Templates (and, therefore, all Pages assigned to those templates) can have individual sitemap-ignore options. These options allow you to set which Pages and, optionally, their children should be excluded from the sitemap when it is rendered. In most common cases, you will not need to use this feature.'),
+            'notes' => 'If you remove any templates from this list, any sitemap-ignore options saved for Pages using those templates will be discarded when you save this configuration as the fields are completely removed from the assigned templates. **Please use with caution.**',
             'icon' => 'cubes',
+            'collapsed' => Inputfield::collapsedBlank,
         ]);
         foreach ($templates as $template) {
             $includeTemplatesField->addOption($template->name, $template->get('label|name'));
@@ -113,6 +119,7 @@ class MarkupSitemapConfig extends ModuleConfig
             'label' => $this->_('Image Fields'),
             'description' => $this->_('If you’d like to include images in your sitemap (for somewhat enhanced Google Images support), specify the image fields you’d like MarkupSitemap to traverse and include. The sitemap will include images for every Page that uses the field(s) you select below.'),
             'icon' => 'image',
+            'collapsed' => Inputfield::collapsedBlank,
         ]);
         foreach ($this->fields as $field) {
             $fieldType = $field->get('type')->className;
@@ -143,5 +150,22 @@ class MarkupSitemapConfig extends ModuleConfig
         }
 
         return $field;
+    }
+
+    /**
+     * Remove the sitemap cache
+     * @return bool
+     */
+    protected function removeSitemapCache()
+    {
+        $cachePath = $this->config->paths->cache . MarkupSitemap::MARKUP_CACHE_MODULE . '/MarkupSitemap';
+
+        try {
+            $removed = (bool) CacheFile::removeAll($cachePath, true);
+        } catch (\Exception $e) {
+            $removed = false;
+        }
+
+        return $removed;
     }
 }
