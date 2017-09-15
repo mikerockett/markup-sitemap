@@ -1,7 +1,12 @@
 {
     "title": "Sitemap",
-    "summary": "Renders a sitemap for your ProcessWire powered site. Supports multi-language and multi-site. Adapted from MarkupSitemapXML.",
-    "version": "0.1.2",
+    "version": "0.2",
+    "author": "Mike Rockett",
+    "summary": "Renders a sitemap for your ProcessWire powered site. Supports multi-language, multi-site, and image sub-elements. Adapted from MarkupSitemapXML.",
+    "href": "http://github.com/rockettpw/markup-sitemap",
+    "hrefsupport": "https://processwire.com/talk/topic/17068-markupsitemap/",
+    "license": "MIT",
+    "hreflicense": "http://mit-license.org/",
     "permanent": false,
     "autoload": true,
     "singular": true

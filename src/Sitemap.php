@@ -1,29 +1,39 @@
 <?php
 
-namespace Thepixeldeveloper\Sitemap;
+/**
+ * Sitemap for PHP. Eloquent sitemap creation with sub-element support.
+ * https://github.com/ThePixelDeveloper/Sitemap/
+ * Local fork maintained by Mike Rockett for MarkupSitemap.
+ *
+ * @copyright 2013, Mathew Davies <thepixeldeveloper@googlemail.com>
+ * @license   MIT
+ */
 
+namespace Rockett\Sitemap;
+
+use Rockett\Sitemap\Contracts\OutputContract;
 use XMLWriter;
 
 /**
  * Class Sitemap
  *
- * @package Thepixeldeveloper\Sitemap
+ * @package Rockett\Sitemap
  */
-class Sitemap implements OutputInterface
+class Sitemap implements OutputContract
 {
-    /**
-     * Location (URL).
-     *
-     * @var string
-     */
-    protected $loc;
-
     /**
      * Last modified time.
      *
      * @var string
      */
     protected $lastMod;
+
+    /**
+     * Location (URL).
+     *
+     * @var string
+     */
+    protected $loc;
 
     /**
      * Url constructor
@@ -51,16 +61,6 @@ class Sitemap implements OutputInterface
     }
 
     /**
-     * Get location (URL).
-     *
-     * @return string
-     */
-    public function getLoc()
-    {
-        return $this->loc;
-    }
-
-    /**
      * Get the last modification time.
      *
      * @return string|null
@@ -71,10 +71,19 @@ class Sitemap implements OutputInterface
     }
 
     /**
+     * Get location (URL).
+     *
+     * @return string
+     */
+    public function getLoc()
+    {
+        return $this->loc;
+    }
+
+    /**
      * Set the last modification time.
      *
-     * @param string $lastMod
-     *
+     * @param  string  $lastMod
      * @return $this
      */
     public function setLastMod($lastMod)
