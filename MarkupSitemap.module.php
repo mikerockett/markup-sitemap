@@ -10,16 +10,20 @@
  * @license MIT
  */
 
-wire('classLoader')->addNamespace('Rockett\Sitemap', __DIR__ . '/src');
+wire('classLoader')->addNamespace('Rockett\Sitemap', __DIR__ . '/src/Sitemap');
+wire('classLoader')->addNamespace('Rockett\Utilities', __DIR__ . '/src/Utilities');
 
 use Rockett\Sitemap\Elements\Url;
 use Rockett\Sitemap\Elements\Urlset;
 use Rockett\Sitemap\Output;
 use Rockett\Sitemap\SubElements\Image;
 use Rockett\Sitemap\SubElements\Link;
+use Rockett\Utilities\Fields;
 
 class MarkupSitemap extends WireData implements Module
 {
+    use Fields;
+
     /**
      * Image fields: each field is mapped to the relavent
      * function for the Image sub-element
@@ -302,8 +306,7 @@ class MarkupSitemap extends WireData implements Module
                             continue;
                         }
                     }
-                    $setImageLinkMeta = "set{$imageMetaMethod}";
-                    $locImage->{$setImageLinkMeta}($image->$imageMetaValue);
+                    $locImage->{"set{$imageMetaMethod}"}($image->$imageMetaValue);
                 }
             }
         }
@@ -355,7 +358,7 @@ class MarkupSitemap extends WireData implements Module
                     $url->setLastMod(date('c', $page->modified));
                     $this->addAltLanguages($page, $url);
                     if (!empty($page->sitemap_priority)) {
-                        $url->setPriority(sprintf('%.1F', (float) $page->sitemap_priority));
+                        $url->setPriority($this->formatPriorityFloat($page->sitemap_priority));
                     }
                     if (!$page->sitemap_ignore_images) {
                         $this->addImages($page, $url, $language);
@@ -368,7 +371,7 @@ class MarkupSitemap extends WireData implements Module
                 $url = new Url($page->httpUrl);
                 $url->setLastMod(date('c', $page->modified));
                 if (!empty($page->sitemap_priority)) {
-                    $url->setPriority((float) $page->sitemap_priority);
+                    $url->setPriority($this->formatPriorityFloat($page->sitemap_priority));
                 }
                 if (!$page->sitemap_ignore_images) {
                     $this->addImages($page, $url);
@@ -393,42 +396,13 @@ class MarkupSitemap extends WireData implements Module
     }
 
     /**
-     * Given a fieldtype, name, and attributes, create and save a new Field.
-     * @param  string       $fieldType
-     * @param  string       $name
-     * @param  array        $meta
-     * @return Field|bool
+     * Correctly format the priority float to one decimal
+     * @param  float
+     * @return string
      */
-    protected function createField($fieldType, $name, $meta, $system = false)
+    protected function formatPriorityFloat($priority)
     {
-        if ($this->fields->get($name)) {
-            return false;
-        }
-
-        // Set the initial properties
-        $field = new Field();
-        $fieldType = "Fieldtype{$fieldType}";
-        $field->type = $this->modules->$fieldType;
-        $field->name = $name;
-        if ($system === true) {
-            $field->set('flags', Field::flagSystem);
-        }
-
-        // Unset extra meta (already used)
-        unset($meta['type']);
-        unset($meta['name']);
-
-        // Add meta
-        foreach ($meta as $metaNames => $metaInfo) {
-            $metaNames = explode('+', $metaNames);
-            foreach ($metaNames as $metaName) {
-                $field->$metaName = $metaInfo;
-            }
-        }
-
-        $field->save();
-
-        return $field;
+        return sprintf('%.1F', (float) $priority);
     }
 
     /**

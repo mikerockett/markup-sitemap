@@ -10,8 +10,14 @@
  * @license MIT
  */
 
+wire('classLoader')->addNamespace('Rockett\Utilities', __DIR__ . '/src/Utilities');
+
+use Rockett\Utilities\Fields;
+
 class MarkupSitemapConfig extends ModuleConfig
 {
+    use Fields;
+
     /**
      * Get the default system fields created by the module
      * @return array
@@ -158,25 +164,6 @@ class MarkupSitemapConfig extends ModuleConfig
         }
 
         return $inputfields;
-    }
-
-    /**
-     * Given a fieldtype, create, populate, and return an Inputfield
-     * @param  string       $fieldNameId
-     * @param  array        $meta
-     * @return Inputfield
-     */
-    protected function buildInputField($fieldNameId, $meta)
-    {
-        $field = $this->modules->{"Inputfield{$fieldNameId}"};
-        foreach ($meta as $metaNames => $metaInfo) {
-            $metaNames = explode('+', $metaNames);
-            foreach ($metaNames as $metaName) {
-                $field->$metaName = $metaInfo;
-            }
-        }
-
-        return $field;
     }
 
     /**

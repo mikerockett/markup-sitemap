@@ -1,6 +1,6 @@
 ## Sitemap for ProcessWire
 
-![Shield: Status = Beta](https://img.shields.io/badge/status-beta-orange.svg?style=flat-square)![Shield: Version = 0.2.0](https://img.shields.io/badge/version-0.2.0-blue.svg?style=flat-square)![Shield: License = MIT](https://img.shields.io/github/license/mikerockett/simpleforms.svg?style=flat-square)
+![Shield: Status = Beta](https://img.shields.io/badge/status-beta-orange.svg?style=flat-square)![Shield: Version = 0.2.1](https://img.shields.io/badge/version-0.2.1-blue.svg?style=flat-square)![Shield: License = MIT](https://img.shields.io/github/license/mikerockett/simpleforms.svg?style=flat-square)
 
 An upgrade to MarkupSitemapXML by Pete, MarkupSitemap adds multi-language support using the built-in LanguageSupportPageNames. Where multi-language pages are available, they are added to the sitemap by means of an alternate link in that page’s `<url>`. Support for listing images in the sitemap on a page-by-page basis and using a sitemap stylesheet are also added.
 
