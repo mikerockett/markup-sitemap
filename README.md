@@ -8,11 +8,7 @@ An upgrade to MarkupSitemapXML by Pete, MarkupSitemap adds multi-language suppor
 
 ### Getting Started
 
-In ProcessWire, install MarkupSitemap via the module installer. Enter `MarkupSitemap` into Modules > Install > New > Add Module from Directory.
-
-### Usage
-
-After installation, the sitemap will immediately be made available at `/sitemap.xml`.
+In ProcessWire, install MarkupSitemap via the module installer. Enter `MarkupSitemap` into Modules > Install > New > Add Module from Directory. After installation, the sitemap will immediately be made available at `/sitemap.xml`.
 
 If you’re looking for a basic sitemap, there’s nothing more you need to do. 🎇
 
