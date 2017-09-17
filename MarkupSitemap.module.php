@@ -143,10 +143,11 @@ class MarkupSitemap extends WireData implements Module
                 $templateFields->save();
             }
             // Then delete the fields
-            $field = $fields->get($fieldName);
-            $field->flags = Field::flagSystemOverride;
-            $field->flags = 0;
-            $fields->delete($field);
+            if ($field = $fields->get($fieldName)) {
+                $field->flags = Field::flagSystemOverride;
+                $field->flags = 0;
+                $fields->delete($field);
+            }
         }
     }
 

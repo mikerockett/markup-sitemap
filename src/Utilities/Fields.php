@@ -11,8 +11,6 @@
 
 namespace Rockett\Utilities;
 
-use ProcessWire\Field;
-
 trait Fields
 {
     /**
@@ -48,11 +46,11 @@ trait Fields
         }
 
         // Set the initial properties
-        $field = new Field();
+        $field = new \Field();
         $field->type = $this->modules->{"Fieldtype{$fieldType}"};
         $field->name = $name;
         if ($system === true) {
-            $field->set('flags', Field::flagSystem);
+            $field->set('flags', \Field::flagSystem);
         }
 
         // Unset extra meta (already used)
