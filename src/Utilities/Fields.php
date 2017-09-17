@@ -11,6 +11,8 @@
 
 namespace Rockett\Utilities;
 
+use ProcessWire\Field;
+
 trait Fields
 {
     /**
