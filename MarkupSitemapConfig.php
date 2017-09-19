@@ -114,21 +114,19 @@ class MarkupSitemapConfig extends ModuleConfig
         }
         $inputfields->add($includeTemplatesField);
 
-        // Add the image-field-selector field
-        $imageFieldsField = $this->buildInputField('AsmSelect', [
-            'name+id' => 'sitemap_image_fields',
-            'label' => $this->_('Image fields'),
-            'description' => $this->_('If you’d like to include images in your sitemap (for somewhat enhanced Google Images support), specify the image fields you’d like MarkupSitemap to traverse and include. The sitemap will include images for every page that uses the field(s) you select below, except for pages that are set to not have their images included.'),
-            'icon' => 'image',
-            'collapsed' => Inputfield::collapsedBlank,
-        ]);
-        foreach ($this->fields as $field) {
-            $fieldType = $field->get('type')->className;
-            if ($fieldType === 'FieldtypeImage') {
+        // Add the image-field-selector field if image fields exist
+        if ($imageFields = $this->fields->find('type=FieldtypeImage') and $imageFields->count) {
+            $imageFieldsField = $this->buildInputField('AsmSelect', [
+                'name+id' => 'sitemap_image_fields',
+                'label' => $this->_('Image fields'),
+                'description' => $this->_('If you’d like to include images in your sitemap (for somewhat enhanced Google Images support), specify the image fields you’d like MarkupSitemap to traverse and include. The sitemap will include images for every page that uses the field(s) you select below, except for pages that are set to not have their images included.'),
+                'icon' => 'image',
+            ]);
+            foreach ($imageFields as $field) {
                 $imageFieldsField->addOption($field->name, "{$field->get('label|name')} (used in {$field->numFieldgroups()} templates)");
             }
+            $inputfields->add($imageFieldsField);
         }
-        $inputfields->add($imageFieldsField);
 
         // Add the stylesheet checkbox
         $inputfields->add($this->buildInputField('Checkbox', [
@@ -136,6 +134,7 @@ class MarkupSitemapConfig extends ModuleConfig
             'label' => $this->_('Sitemap Stylesheet'),
             'label2' => $this->_('Add a stylesheet to the sitemap'),
             'icon' => 'css3',
+            'columnWidth' => '35%',
         ]));
 
         // Add the custom stylesheet text field
@@ -147,7 +146,7 @@ class MarkupSitemapConfig extends ModuleConfig
             'showIf' => 'sitemap_stylesheet=1',
             'notes' => $this->_('The default stylesheet is located at **assets/sitemap-stylesheet.xsl** in the module’s directory. If you leave this field blank or your input is not a valid URL, the default will be used.'),
             'icon' => 'file-o',
-            'collapsed' => Inputfield::collapsedBlank,
+            'columnWidth' => '65%',
         ]));
 
         // Add the default-language iso text field
@@ -155,13 +154,25 @@ class MarkupSitemapConfig extends ModuleConfig
             $inputfields->add($this->buildInputField('Text', [
                 'name+id' => 'sitemap_default_iso',
                 'label' => $this->_('ISO code for default language'),
-                'description' => $this->_('If you’ve set your home page to not include a language ISO (default language name) **and** your home page’s default language name is empty, then you can set an ISO code here for the default language. This will prevent the sitemap from containing `hreflang="home"` for all default-language URLs.'),
+                'description' => $this->_('If you’ve set your home page to not include a language ISO (default language name) via LanguageSupportPageNames **and** your home page’s default language name is empty, then you can set an ISO code here for the default language that will appear in the sitemap. This will prevent the sitemap from containing `hreflang="home"` for all default-language URLs.'),
                 'notes' => $this->_('Note that if your home page has a name for the default language, then this option will not take any effect.'),
                 'placeholder' => $this->_('en'),
                 'icon' => 'language',
                 'collapsed' => Inputfield::collapsedBlank,
             ]));
         }
+
+        $this->config->scripts->add($this->urls->httpSiteModules . 'MarkupSitemap/assets/scripts/config.js');
+
+        // Add the support-development markup field
+        $supportText = $this->wire('sanitizer')->entitiesMarkdown($this->_('Sitemap is proudly [open-source](http://opensource.com/resources/what-open-source) and is [free to use](https://en.wikipedia.org/wiki/Free_software) for personal and commercial projects. Please consider [making a small donation](https://rockett.pw/donate) in support of the development of MarkupSitemap and other modules.'), ['fullMarkdown' => true]);
+        $inputfields->add($this->buildInputField('Markup', [
+            'id' => 'support_development',
+            'label' => $this->_('Support Development'),
+            'value' => $supportText,
+            'icon' => 'paypal',
+            'collapsed' => Inputfield::collapsedYes,
+        ]));
 
         return $inputfields;
     }

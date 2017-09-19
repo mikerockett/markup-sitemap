@@ -74,11 +74,11 @@ class Urlset implements OutputContract
     {
         $XMLWriter->startElement('urlset');
 
-        $XMLWriter->writeAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $XMLWriter->writeAttribute('xmlns:xsi', 'https://www.w3.org/2001/XMLSchema-instance');
 
         $XMLWriter->writeAttribute('xsi:schemaLocation',
             'http://www.sitemaps.org/schemas/sitemap/0.9 ' .
-            'http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd');
+            'https://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd');
 
         $XMLWriter->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 

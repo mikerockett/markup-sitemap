@@ -180,7 +180,7 @@ class MarkupSitemap extends WireData implements Module
                 }
             }
             // Add the hook to process and render the sitemap.
-            $this->addHookAfter('ProcessPageView::pageNotFound', $this, 'render');
+            $this->addHookBefore('ProcessPageView::pageNotFound', $this, 'render');
         }
         // Add a hook that moves the XML Sitemap fields to the Settings tab
         $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'moveSitemapFields');
@@ -233,34 +233,42 @@ class MarkupSitemap extends WireData implements Module
         }
 
         // Make sure that the root page exists.
-        if ($this->pages->get($rootPage) instanceof NullPage) {
-            return false;
-        }
-
-        // Check for cached sitemap or regenerate if it doesn't exist
-        $rootPageName = $this->sanitizer->pageName($rootPage);
-        $markupCache = $this->modules->MarkupCache;
-        if ((!$output = $markupCache->get('MarkupSitemap', 3600)) || $this->config->debug) {
-            $this->urlSet = new Urlset();
-            $this->addPages($this->pages->get($rootPage));
-            $sitemapOutput = new Output();
-            if ($this->sitemap_stylesheet) {
-                if ($this->sitemap_stylesheet_custom
-                    && filter_var($this->sitemap_stylesheet_custom, FILTER_VALIDATE_URL)) {
-                    $stylesheetPath = $this->sitemap_stylesheet_custom;
-                } else {
-                    $stylesheetPath = $this->urls->httpSiteModules . 'MarkupSitemap/assets/sitemap-stylesheet.xsl';
+        if (!$this->pages->get($rootPage) instanceof NullPage) {
+            // Check for cached sitemap or regenerate if it doesn't exist
+            $rootPageName = $this->sanitizer->pageName($rootPage);
+            $markupCache = $this->modules->MarkupCache;
+            if ((!$output = $markupCache->get('MarkupSitemap', 3600)) || $this->config->debug) {
+                $this->urlSet = new Urlset();
+                $this->addPages($this->pages->get($rootPage));
+                $sitemapOutput = new Output();
+                if ($this->sitemap_stylesheet) {
+                    if ($this->sitemap_stylesheet_custom
+                        && filter_var($this->sitemap_stylesheet_custom, FILTER_VALIDATE_URL)) {
+                        $stylesheetPath = $this->sitemap_stylesheet_custom;
+                    } else {
+                        $stylesheetPath = $this->urls->httpSiteModules . 'MarkupSitemap/assets/sitemap-stylesheet.xsl';
+                    }
+                    $sitemapOutput->addProcessingInstruction(
+                        'xml-stylesheet',
+                        'type="text/xsl" href="' . $stylesheetPath . '"'
+                    );
                 }
-                $sitemapOutput->addProcessingInstruction(
-                    'xml-stylesheet',
-                    'type="text/xsl" href="' . $stylesheetPath . '"'
-                );
+                header('X-SitemapRetrievedFromCache: no');
+                $output = $sitemapOutput->setIndented(true)->getOutput($this->urlSet);
+                $markupCache->save($output);
+            } else {
+                header('X-SitemapRetrievedFromCache: yes');
             }
-            $output = $sitemapOutput->setIndented(true)->getOutput($this->urlSet);
-            $markupCache->save($output);
+            header('Content-Type: application/xml', true, 200);
+            $event->return = $output;
+
+            // Prevent further hooks. This stops
+            // SystemNotifications from displaying a 404 event
+            // when /sitemap.xml is requested. Additionall,
+            // it prevents further modification to the sitemap.
+            $event->replace = true;
+            $event->cancelHooks = true;
         }
-        header('Content-Type: application/xml', true, 200);
-        $event->return = $output;
     }
 
     /**
@@ -323,13 +331,15 @@ class MarkupSitemap extends WireData implements Module
     protected function addImages($page, $url, $language = null)
     {
         // Loop through declared image fields and skip non image fields
-        foreach ($this->sitemap_image_fields as $imageFieldName) {
-            $page->of(false);
-            $imageField = $page->$imageFieldName;
-            if ($imageField) {
-                foreach ($imageField as $image) {
-                    if ($image instanceof Pageimage) {
-                        $url->addSubElement($this->addImage($image, $language));
+        if ($this->sitemap_image_fields) {
+            foreach ($this->sitemap_image_fields as $imageFieldName) {
+                $page->of(false);
+                $imageField = $page->$imageFieldName;
+                if ($imageField) {
+                    foreach ($imageField as $image) {
+                        if ($image instanceof Pageimage) {
+                            $url->addSubElement($this->addImage($image, $language));
+                        }
                     }
                 }
             }
