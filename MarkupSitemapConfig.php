@@ -10,27 +10,24 @@
  * @license MIT
  */
 
-wire('classLoader')->addNamespace('Rockett\Utilities', __DIR__ . '/src/Utilities');
+require_once __DIR__ . '/ClassLoader.php';
 
-use Rockett\Utilities\Fields;
+use Rockett\Traits\FieldsTrait as BuildsFields;
 
 class MarkupSitemapConfig extends ModuleConfig
 {
-    use Fields;
+    use BuildsFields;
 
     /**
-     * Get the default system fields created by the module
+     * Get default condifguration, automatically passed to input fields.
      * @return array
      */
-    public static function getDefaultFields()
+    public function getDefaults()
     {
         return [
-            'sitemap_fieldset',
-            'sitemap_priority',
-            'sitemap_ignore_images',
-            'sitemap_ignore_page',
-            'sitemap_ignore_children',
-            'sitemap_fieldset_END',
+            // This has been turned on by default due to the fact that
+            // the default XML output is not rendered properly (not sure why)
+            'sitemap_stylesheet' => true,
         ];
     }
 
@@ -50,52 +47,11 @@ class MarkupSitemapConfig extends ModuleConfig
             $templates[] = $template;
         }
 
-        // If saving ...
-        if ($this->input->post->submit_save_module) {
-            // Remove sitemap cache
-            if ($this->removeSitemapCache()) {
-                $this->message($this->_('Removed sitemap cache'));
-            }
-            // Add/remove sitemap fields from templates
-            $includedTemplates = (array) $this->input->post->sitemap_include_templates;
-            foreach ($templates as $template) {
-                if (in_array($template->name, $includedTemplates)) {
-                    if ($template->hasField('sitemap_fieldset')) {
-                        continue;
-                    } else {
-                        $sitemapFields = self::getDefaultFields();
-                        unset($sitemapFields[count($sitemapFields) - 1]);
-                        foreach ($this->fields as $sitemapField) {
-                            if (preg_match('%^sitemap_.*%Uis', $sitemapField->name)
-                                && !in_array($sitemapField->name, self::getDefaultFields())) {
-                                array_push($sitemapFields, $sitemapField->name);
-                            }
-                        }
-                        array_push($sitemapFields, 'sitemap_fieldset_END');
-                        foreach ($sitemapFields as $templateField) {
-                            if ($template->id === $this->pages->get(1)->template->id
-                                && in_array($templateField, ['sitemap_ignore_page',
-                                    'sitemap_ignore_children'])) {
-                                continue;
-                            }
-                            $template->fields->add($this->fields->get($templateField));
-                        }
-                        $template->fields->save();
-                    }
-                } else {
-                    if ($template->hasField('sitemap_fieldset')) {
-                        foreach ($template->fields as $templateField) {
-                            if (in_array($templateField->name, self::getDefaultFields())) {
-                                $template->fields->remove($templateField);
-                            }
-                        }
-                        $template->fields->save();
-                    } else {
-                        continue;
-                    }
-                }
-            }
-        }
+        // If saving, remove the sitemap cache to effect
+        // possible changes in configuration.
+        $this->input->post->submit_save_module &&
+        $this->removeSitemapCache() &&
+        $this->message($this->_('Removed sitemap cache'));
 
         // Start inputfields
         $inputfields = parent::getInputfields();
@@ -104,10 +60,9 @@ class MarkupSitemapConfig extends ModuleConfig
         $includeTemplatesField = $this->buildInputField('AsmSelect', [
             'name+id' => 'sitemap_include_templates',
             'label' => 'Templates with sitemap options',
-            'description' => $this->_('Select which templates (and, therefore, all pages assigned to those templates) can have individual sitemap options. These options allow you to set which pages and, optionally, their children should be excluded from the sitemap when it is rendered; define which page’s images should not be included in the sitemap (provided that image fields have been added below); and set an optional priority for each page.'),
-            'notes' => '**Please use with caution:** If you remove any templates from this list, any sitemap options saved for pages using those templates will be discarded when you save this configuration as the fields are completely removed from the assigned templates. Also note that the home page cannot be excluded from the sitemap. As such, the applicable options will not be available for the home page.',
+            'description' => $this->_('Select which templates (and, therefore, all pages assigned to those templates) can have individual sitemap options. These options (shown in the Settings tab of the page editor) allow you to set which pages and, optionally, their children should be excluded from the sitemap when it is rendered; define which page’s images should not be included in the sitemap (provided that image fields have been added below); and, lastly, set an optional priority for each page.'),
+            'notes' => $this->_("**Removal/Restoration:** Removing a template from this list will not delete any page options applicable to it. However, they will also not be read when rendering the sitemap. As such, when restoring a template to this list after having removed it, any previous options saved for a page that uses this template will be used when rendering the sitemap. The only time sitemap options are deleted is when either the page in question is completely deleted after having been trashed, or when the module is uninstalled.\n\n**A note about the home Page: ** This page cannot be excluded from the sitemap. As such, the applicable exclusion options will not be available when editing it."),
             'icon' => 'cubes',
-            'collapsed' => Inputfield::collapsedBlank,
         ]);
         foreach ($templates as $template) {
             $includeTemplatesField->addOption($template->name, $template->get('label|name'));
@@ -121,33 +76,13 @@ class MarkupSitemapConfig extends ModuleConfig
                 'label' => $this->_('Image fields'),
                 'description' => $this->_('If you’d like to include images in your sitemap (for somewhat enhanced Google Images support), specify the image fields you’d like MarkupSitemap to traverse and include. The sitemap will include images for every page that uses the field(s) you select below, except for pages that are set to not have their images included.'),
                 'icon' => 'image',
+                'collapsed' => Inputfield::collapsedBlank,
             ]);
             foreach ($imageFields as $field) {
                 $imageFieldsField->addOption($field->name, "{$field->get('label|name')} (used in {$field->numFieldgroups()} templates)");
             }
             $inputfields->add($imageFieldsField);
         }
-
-        // Add the stylesheet checkbox
-        $inputfields->add($this->buildInputField('Checkbox', [
-            'name+id' => 'sitemap_stylesheet',
-            'label' => $this->_('Sitemap Stylesheet'),
-            'label2' => $this->_('Add a stylesheet to the sitemap'),
-            'icon' => 'css3',
-            'columnWidth' => '35%',
-        ]));
-
-        // Add the custom stylesheet text field
-        $inputfields->add($this->buildInputField('Text', [
-            'name+id' => 'sitemap_stylesheet_custom',
-            'label' => $this->_('Custom Stylesheet'),
-            'description' => $this->_('If you would like to use your own stylesheet, enter the absolute URL to its file here.'),
-            'placeholder' => $this->_('Example: https://example.tld/assets/sitemap-stylesheet.xsl'),
-            'showIf' => 'sitemap_stylesheet=1',
-            'notes' => $this->_('The default stylesheet is located at **assets/sitemap-stylesheet.xsl** in the module’s directory. If you leave this field blank or your input is not a valid URL, the default will be used.'),
-            'icon' => 'file-o',
-            'columnWidth' => '65%',
-        ]));
 
         // Add the default-language iso text field
         if ($this->siteUsesLanguageSupportPageNames()) {
@@ -156,13 +91,40 @@ class MarkupSitemapConfig extends ModuleConfig
                 'label' => $this->_('ISO code for default language'),
                 'description' => $this->_('If you’ve set your home page to not include a language ISO (default language name) via LanguageSupportPageNames **and** your home page’s default language name is empty, then you can set an ISO code here for the default language that will appear in the sitemap. This will prevent the sitemap from containing `hreflang="home"` for all default-language URLs.'),
                 'notes' => $this->_('Note that if your home page has a name for the default language, then this option will not take any effect.'),
-                'placeholder' => $this->_('en'),
+                'placeholder' => $this->_('Example: en'),
                 'icon' => 'language',
                 'collapsed' => Inputfield::collapsedBlank,
             ]));
         }
 
-        $this->config->scripts->add($this->urls->httpSiteModules . 'MarkupSitemap/assets/scripts/config.js');
+        // Create the stylesheet fieldset
+        $stylesheetFieldset = $this->buildInputField('Fieldset', [
+            'label' => $this->_('Stylesheet'),
+            'collapsed' => Inputfield::collapsedBlank,
+            'icon' => 'css3',
+        ]);
+
+        // Add the stylesheet checkbox
+        $stylesheetFieldset->add($this->buildInputField('Checkbox', [
+            'name+id' => 'sitemap_stylesheet',
+            // 'label' => $this->_('Sitemap Stylesheet'),
+            'label' => $this->_('Add a stylesheet to the sitemap'),
+        ]));
+
+        // Add the custom stylesheet text field
+        $stylesheetFieldset->add($this->buildInputField('Text', [
+            'name+id' => 'sitemap_stylesheet_custom',
+            'label' => $this->_('Custom Stylesheet'),
+            'description' => $this->_('If you would like to use your own stylesheet, enter the absolute URL to its file here.'),
+            'placeholder' => $this->_('Example: https://example.tld/assets/sitemap-stylesheet.xsl'),
+            'showIf' => 'sitemap_stylesheet=1',
+            'notes' => $this->_('The default stylesheet is located at **assets/sitemap-stylesheet.xsl** in the module’s directory. If you leave this field blank or your input is not a valid URL, the default will be used.'),
+            'icon' => 'file-o',
+            'collapsed' => Inputfield::collapsedBlank,
+        ]));
+
+        // Add the stylesheet fieldset to the inputfields
+        $inputfields->add($stylesheetFieldset);
 
         // Add the support-development markup field
         $supportText = $this->wire('sanitizer')->entitiesMarkdown($this->_('Sitemap is proudly [open-source](http://opensource.com/resources/what-open-source) and is [free to use](https://en.wikipedia.org/wiki/Free_software) for personal and commercial projects. Please consider [making a small donation](https://rockett.pw/donate) in support of the development of MarkupSitemap and other modules.'), ['fullMarkdown' => true]);
@@ -174,6 +136,8 @@ class MarkupSitemapConfig extends ModuleConfig
             'collapsed' => Inputfield::collapsedYes,
         ]));
 
+        $this->config->scripts->add($this->urls->httpSiteModules . 'MarkupSitemap/assets/scripts/config.js');
+
         return $inputfields;
     }
 
@@ -183,9 +147,8 @@ class MarkupSitemapConfig extends ModuleConfig
      */
     protected function removeSitemapCache()
     {
-        $cachePath = $this->config->paths->cache . 'MarkupCache/MarkupSitemap';
-
         try {
+            $cachePath = $this->config->paths->cache . 'MarkupCache/MarkupSitemap';
             $removed = (bool) CacheFile::removeAll($cachePath, true);
         } catch (\Exception $e) {
             $removed = false;
