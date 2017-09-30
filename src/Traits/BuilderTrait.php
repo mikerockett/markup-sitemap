@@ -111,6 +111,18 @@ trait BuilderTrait
         // Get the saved options for this page
         $pageSitemapOptions = $this->modules->getConfig($this, "o{$page->id}");
 
+        // If the template that this page belongs to is not using sitemap options
+        // (per the module's current configuration), then we need to revert the keys
+        // in $pageSitemapOptions to their defaults so as to prevent their
+        // saved options from being used in this cycle.
+        if ($this->sitemap_include_templates !== null
+            && !in_array($page->template->name, $this->sitemap_include_templates)
+            && is_array($pageSitemapOptions)) {
+            array_walk_recursive($pageSitemapOptions, function(&$value) {
+                $value = false;
+            });
+        }
+
         // If the page is viewable and not excluded or we’re working with the root page,
         // begin generating the sitemap by adding pages recursively. (Root is always added.)
         if ($page->viewable() && ($page->path === '/' || !$pageSitemapOptions['excludes']['page'])) {
