@@ -58,8 +58,7 @@ Visit [processwire.com/talk/topic/17068-markupsitemap/](https://processwire.com/
 
 ### Credits
 
-I’d like to thank [Mathew Davies](https://github.com/ThePixelDeveloper) for his [sitemap package](https://github.com/ThePixelDeveloper/Sitemap). It’s really great, sans a few bugs (which is why a local fork is maintained within this module).
-
+I’d like to thank [Mathew Davies](https://github.com/ThePixelDeveloper) for his [sitemap package](https://github.com/ThePixelDeveloper/Sitemap). It’s really great, and much better than most packages out there, as far as I’m concerned. There were a few bugs, which is why the package is locally maintained. Whilst the bugs have been fixed, the local package remains, for the time being.
 
 ---
 
