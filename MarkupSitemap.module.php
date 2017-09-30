@@ -5,7 +5,7 @@
  *
  * Module class
  *
- * @author Mike Rockett
+ * @author Mike Rockett <github@rockett.pw>
  * @copyright 2017
  * @license MIT
  */
