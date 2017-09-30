@@ -58,7 +58,9 @@ class MarkupSitemap extends WireData implements Module
     public function ___install()
     {
         // Requires ProcessWire 2/3.0.16 (saveConfig; getConfig)
-        if (in_array(ProcessWire::versionMajor, [2, 3]) && ProcessWire::versionRevision < 16) {
+        if (in_array(ProcessWire::versionMajor, [2, 3]) &&
+            ProcessWire::versionMinor === 0 &&
+            ProcessWire::versionRevision < 16) {
             throw new WireException('MarkupSitemap requires at least ProcessWire ' . ProcessWire::versionMajor . '.0.16 to run.');
         }
     }
