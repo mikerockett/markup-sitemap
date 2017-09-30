@@ -91,7 +91,7 @@ trait BuilderTrait
                 $imageField = $page->$imageFieldName;
                 if ($imageField) {
                     foreach ($imageField as $image) {
-                        if ($image instanceof Pageimage) {
+                        if ($image instanceof Pageimage || $image instanceof \ProcessWire\Pageimage) {
                             $url->addSubElement($this->addImage($image, $language));
                         }
                     }
