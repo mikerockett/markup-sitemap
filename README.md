@@ -26,11 +26,11 @@ With this option, you can select which templates (and, therefore, all pages assi
 - define which page’s images should not be included in the sitemap (provided that image fields have been configured); and
 - set an optional priority for each page.
 
-When you add a template to the list and save, sitemap options will be added to the selected templates, and will be made available in the Settings tab of each page those templates use.
+When you add a template to the list and save, sitemap options will be made available to pages that use that template (in the Settings tab).
 
-**Please use with caution:** If you remove any templates from the list, any sitemap options saved for pages using those templates will be discarded when you save the configuration as the fields are completely removed from the assigned templates.
+**Removal/Restoration:** Removing a template from the list will not delete any page options applicable to it. However, they will also not be read when rendering the sitemap. As such, when restoring a template to the list after having removed it, any previous options saved for a page that uses this template will be used when rendering the sitemap. The only time sitemap options are deleted is when either the page in question is completely deleted after having been trashed, or when the module is uninstalled.
 
-Also note that the home page cannot be excluded from the sitemap. As such, the applicable options will not be available for the home page.
+**A note about the home page:** This page cannot be excluded from the sitemap. As such, the applicable exclusion options will not be available when editing it.
 
 #### Image fields
 
@@ -38,7 +38,7 @@ If you’d like to include images in your sitemap (for somewhat enhanced Google 
 
 #### Stylesheet
 
-In the module’s configuration, you can also enable the default stylesheet. If you’d like to use your own, you’ll need to specify an absolute URL to it (also be sure to use one that has mult-language and sub-element features).
+In the module’s configuration, you can also disable the stylesheet, which is turned on be default. If you’d like to use your own, you’ll need to specify an absolute URL to it (also be sure to use one that has mult-language and sub-element features).
 
 #### ISO code for default language
 
