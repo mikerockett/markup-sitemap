@@ -118,7 +118,7 @@ trait BuilderTrait
         if ($this->sitemap_include_templates !== null
             && !in_array($page->template->name, $this->sitemap_include_templates)
             && is_array($pageSitemapOptions)) {
-            array_walk_recursive($pageSitemapOptions, function(&$value) {
+            array_walk_recursive($pageSitemapOptions, function (&$value) {
                 $value = false;
             });
         }

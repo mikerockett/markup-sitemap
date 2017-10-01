@@ -35,7 +35,8 @@ trait DebugTrait
         array_map(
             function ($mixed) {
                 var_dump($mixed);
-            }, func_get_args()
+            },
+            func_get_args()
         );
         return true;
     }
@@ -96,7 +97,8 @@ trait DebugTrait
         array_map(
             function ($mixed) {
                 print_r($mixed);
-            }, func_get_args()
+            },
+            func_get_args()
         );
 
         return true;

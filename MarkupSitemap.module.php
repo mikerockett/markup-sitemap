@@ -10,6 +10,7 @@
  * @license MIT
  */
 
+// Require the classloader
 require_once __DIR__ . '/ClassLoader.php';
 
 use Rockett\Traits\BuilderTrait as BuildsSitemap;
@@ -53,15 +54,15 @@ class MarkupSitemap extends WireData implements Module
 
     /**
      * Module installer
+     * Requires ProcessWire 2.8.16+/3.0.16+ (saveConfig; getConfig)
      * @throws WireException
      */
     public function ___install()
     {
-        // Requires ProcessWire 2/3.0.16 (saveConfig; getConfig)
-        if (in_array(ProcessWire::versionMajor, [2, 3]) &&
-            ProcessWire::versionMinor === 0 &&
-            ProcessWire::versionRevision < 16) {
-            throw new WireException('MarkupSitemap requires at least ProcessWire ' . ProcessWire::versionMajor . '.0.16 to run.');
+        $processWireVersion = $this->config->version;
+        $applicableMajorMinor = ProcessWire::versionMajor === 2 ? '2.8' : '3.0';
+        if (version_compare($processWireVersion, "{$applicableMajorMinor}.16") < 0) {
+            throw new WireException("Requires ProcessWire {$applicableMajorMinor}.16+ to run.");
         }
     }
 
@@ -71,6 +72,7 @@ class MarkupSitemap extends WireData implements Module
      */
     public function __construct()
     {
+        // Set the request URI
         $this->requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
     }
 
@@ -335,7 +337,11 @@ class MarkupSitemap extends WireData implements Module
      */
     protected function getRootPageUri()
     {
-        return (string) str_ireplace(trim($this->config->urls->root, '/'), '', $this->sanitizer->path(dirname($this->requestUri)));
+        return (string) str_ireplace(
+            trim($this->config->urls->root, '/'),
+            '',
+            $this->sanitizer->path(dirname($this->requestUri))
+        );
     }
 
     /**
