@@ -1,8 +1,8 @@
 ## Sitemap for ProcessWire
 
-![Shield: Tagged Release](https://img.shields.io/github/release/rockettpw/markup-sitemap.svg?style=flat-square) ![Shield: Status Beta](https://img.shields.io/badge/status-beta-orange.svg?style=flat-square) ![Shield: Requires ProcessWire Versions](https://img.shields.io/badge/requires-ProcessWire--2.8.16/3.0.16+-green.svg?style=flat-square) ![Shield: License = MIT](https://img.shields.io/github/license/rockettpw/markup-sitemap.svg?style=flat-square)
+![Shield: Tagged Release](https://img.shields.io/github/release/rockettpw/markup-sitemap.svg?style=flat-square) ![Shield: Status Beta](https://img.shields.io/badge/status-beta-orange.svg?style=flat-square) ![Shield: Requires ProcessWire Versions](https://img.shields.io/badge/requires-ProcessWire--2.8.16/3.0.16+-green.svg?style=flat-square) ![Shield: License = ISC](https://img.shields.io/github/license/rockettpw/markup-sitemap.svg?style=flat-square)
 
-An upgrade to MarkupSitemapXML by Pete, MarkupSitemap adds multi-language support using the built-in LanguageSupportPageNames. Where multi-language pages are available, they are added to the sitemap by means of an alternate link in that page’s `<url>`. Support for listing images in the sitemap on a page-by-page basis and using a sitemap stylesheet are also added.
+An upgrade to [MarkupSitemapXML](https://github.com/Notanotherdotcom/MarkupSitemapXML) by Pete, MarkupSitemap adds multi-language support using the built-in LanguageSupportPageNames. Where multi-language pages are available, they are added to the sitemap by means of an alternate link in that page’s `<url>`. Support for listing images in the sitemap on a page-by-page basis and using a sitemap stylesheet are also added.
 
 ---
 
@@ -62,4 +62,4 @@ I’d like to thank [Mathew Davies](https://github.com/ThePixelDeveloper) for hi
 
 ---
 
-Module is released under the [MIT License](LICENSE.md).
+Sitemap for Processwire is released under the [ISC License](LICENSE.md). The Sitemap package by Matthew Davies is license under the [MIT License](https://github.com/ThePixelDeveloper/Sitemap/blob/master/LICENSE).

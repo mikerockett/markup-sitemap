@@ -7,7 +7,7 @@
  *
  * @author Mike Rockett <github@rockett.pw>
  * @copyright 2017
- * @license MIT
+ * @license ISC
  */
 
 require_once __DIR__ . '/ClassLoader.php';

@@ -6,7 +6,7 @@
  * Add namespace and `use FieldsTrait` in your class.
  *
  * @author  Mike Rockett
- * @license MIT
+ * @license ISC
  */
 
 namespace Rockett\Traits;

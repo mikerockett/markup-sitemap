@@ -5,7 +5,7 @@
  * putting a new sitemap together.
  *
  * @author  Mike Rockett
- * @license MIT
+ * @license ISC
  */
 
 namespace Rockett\Traits;

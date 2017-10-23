@@ -5,7 +5,7 @@
  * during debugging.
  *
  * @author  Mike Rockett
- * @license MIT
+ * @license ISC
  */
 
 namespace Rockett\Traits;
