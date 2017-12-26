@@ -32,7 +32,7 @@ When you add a template to the list and save, sitemap options will be made avail
 
 **A note about the home page:** This page cannot be excluded from the sitemap. As such, the applicable exclusion options will not be available when editing it.
 
-### Templates without sitemap access
+#### Templates without sitemap access
 
 You can also set which templates should not have sitemap access at all. Pages belonging to templates listed here will (a) not be shown in the sitemap and (b) will not be able to change their options, even if listed in the previous section’s template list. As such, this option is non-destructive.
 
