@@ -255,7 +255,9 @@ class MarkupSitemap extends WireData implements Module
         // We only need to proceed with this process if the current page's
         // template has been assigned as configurable in the module's configuration.
         if ($this->sitemap_include_templates !== null
-            && in_array($page->template->name, $this->sitemap_include_templates)) {
+            && in_array($page->template->name, $this->sitemap_include_templates)
+            && !in_array($page->template->name, $this->sitemap_exclude_templates)
+        ) {
             // Get the settings tab inputfields
             $inputFields = $event->return;
 

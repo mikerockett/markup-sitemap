@@ -59,7 +59,7 @@ class MarkupSitemapConfig extends ModuleConfig
         // Add the template-selector field
         $includeTemplatesField = $this->buildInputField('AsmSelect', [
             'name+id' => 'sitemap_include_templates',
-            'label' => 'Templates with sitemap options',
+            'label' => $this->_('Templates with sitemap options'),
             'description' => $this->_('Select which templates (and, therefore, all pages assigned to those templates) can have individual sitemap options. These options (shown in the Settings tab of the page editor) allow you to set which pages and, optionally, their children should be excluded from the sitemap when it is rendered; define which page’s images should not be included in the sitemap (provided that image fields have been added below); and, lastly, set an optional priority for each page.'),
             'notes' => $this->_("**Removal/Restoration:** Removing a template from this list will not delete any page options applicable to it. However, they will also not be read when rendering the sitemap. As such, when restoring a template to this list after having removed it, any previous options saved for a page that uses this template will be used when rendering the sitemap. The only time sitemap options are deleted is when either the page in question is completely deleted after having been trashed, or when the module is uninstalled.\n\n**A note about the home page: ** This page cannot be excluded from the sitemap. As such, the applicable exclusion options will not be available when editing it."),
             'icon' => 'cubes',
@@ -68,6 +68,23 @@ class MarkupSitemapConfig extends ModuleConfig
             $includeTemplatesField->addOption($template->name, $template->get('label|name'));
         }
         $inputfields->add($includeTemplatesField);
+
+        // Add the template-selector field that disables template access to the module.
+        // The home template cannot be added to the exclusions list.
+        $excludeTemplatesField = $this->buildInputField('AsmSelect', [
+            'name+id' => 'sitemap_exclude_templates',
+            'label' => $this->_('Templates without sitemap access'),
+            'description' => $this->_('Select which templates (and, therefore, all pages assigned to those templates) should not have sitemap access.'),
+            'notes' => $this->_('**Note:** Adding a template to this list overrides template-level functionality defined above. If a template is listed here, its pages will not have access to any sitemap functionality, including options, and will not be included in the rendered sitemap. However, the template will not be removed from the options list above, in the case that you wish to easily restore it. As such, this is a non-destructive configuration option.'),
+            'icon' => 'remove',
+            'collapsed' => Inputfield::collapsedBlank,
+        ]);
+        foreach ($templates as $template) {
+            if ($template->id !== 1) {
+                $excludeTemplatesField->addOption($template->name, $template->get('label|name'));
+            }
+        }
+        $inputfields->add($excludeTemplatesField);
 
         // Add the image-field-selector field if image fields exist
         if ($imageFields = $this->fields->find('type=FieldtypeImage') and $imageFields->count) {

@@ -101,10 +101,33 @@ trait BuilderTrait
     }
 
     /**
+     * Determine if a page can be included in the sitemap
+     * @param  $page
+     * @param  $options
+     * @return bool
+     */
+    public function pageIsIncludible($page, $options)
+    {
+        // If it's the home page, it's always includible.
+        if ($page->id === 1) {
+            return true;
+        }
+
+        // If the page's template is excluded from accessing Sitemap,
+        // then it's not includible.
+        if (in_array($page->template->name, $this->sitemap_exclude_templates)) {
+            return false;
+        }
+
+        // Otherwise, check to see if the page itself has been excluded
+        // via Sitemap options.
+        return !$options['excludes']['page'];
+    }
+
+    /**
      * Recursively add pages in each language with
      * alternate language and image sub-elements.
      * @param  $page
-     * @return void
      */
     protected function addPages($page)
     {
@@ -125,7 +148,7 @@ trait BuilderTrait
 
         // If the page is viewable and not excluded or we’re working with the root page,
         // begin generating the sitemap by adding pages recursively. (Root is always added.)
-        if ($page->viewable() && ($page->path === '/' || !$pageSitemapOptions['excludes']['page'])) {
+        if ($page->viewable() && $this->pageIsIncludible($page, $pageSitemapOptions)) {
             // If language support is enabled, then we need to loop through each language
             // to generate <loc> for each language with all alternates, including the
             // current language. Then add image references with multi-language support.
