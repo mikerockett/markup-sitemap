@@ -87,7 +87,7 @@ class MarkupSitemapConfig extends ModuleConfig
         $inputfields->add($excludeTemplatesField);
 
         // Add the image-field-selector field if image fields exist
-        if ($imageFields = $this->fields->find('type=FieldtypeImage') and $imageFields->count) {
+        if ($imageFields = $this->fields->find('type=FieldtypeImage|FieldtypeCroppableImage3') and $imageFields->count) {
             $imageFieldsField = $this->buildInputField('AsmSelect', [
                 'name+id' => 'sitemap_image_fields',
                 'label' => $this->_('Image fields'),
