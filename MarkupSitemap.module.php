@@ -13,13 +13,16 @@
 // Require the classloader
 require_once __DIR__ . '/ClassLoader.php';
 
-use Rockett\Traits\BuilderTrait as BuildsSitemap;
-use Rockett\Traits\DebugTrait as Debugs;
-use Rockett\Traits\FieldsTrait as BuildsFields;
+use Rockett\Sitemap\Elements\Url;
+use Rockett\Sitemap\Elements\Urlset;
+use Rockett\Sitemap\Output;
+use Rockett\Sitemap\SubElements\Image;
+use Rockett\Sitemap\SubElements\Link;
+use Rockett\Traits\FieldsTrait;
 
 class MarkupSitemap extends WireData implements Module
 {
-  use BuildsFields, BuildsSitemap, Debugs;
+  use FieldsTrait;
 
   /**
    * Image fields: each field is mapped to the relavent
@@ -41,28 +44,26 @@ class MarkupSitemap extends WireData implements Module
       'images' => false,
       'page' => false,
       'children' => false,
-    ]
+    ],
   ];
 
   /**
-   * Sßitemap URI
+   * Sitemap URI
    */
   const SITEMAP_URI = '/sitemap.xml';
 
   /**
    * Current request URI
-   *
    * @var string
    */
   protected $requestUri = '';
 
   /**
-   * Page selector
+   * Current UrlSet
    *
-   * @reserved
-   * @var string
+   * @var Urlset
    */
-  protected $selector = '';
+  protected $urlSet;
 
   /**
    * Module installer
@@ -239,21 +240,23 @@ class MarkupSitemap extends WireData implements Module
     // Make sure that the root page exists.
     if (!$this->pages->get($rootPage) instanceof NullPage) {
       // Check for cached sitemap or regenerate if it doesn't exist
-      // $rootPageName = $this->sanitizer->pageName($rootPage);
       $markupCache = $this->modules->MarkupCache;
+
       if ((!$output = $markupCache->get('MarkupSitemap', 3600)) || $this->config->debug) {
         $output = $this->buildNewSitemap($rootPage);
         $markupCache->save($output);
-        header('X-SitemapRetrievedFromCache: no');
+        header('X-Cached-Sitemap: no');
       } else {
-        header('X-SitemapRetrievedFromCache: yes');
+        header('X-Cached-Sitemap: yes');
       }
+
       header('Content-Type: application/xml', true, 200);
+
       $event->return = $output;
 
       // Prevent further hooks. This stops
       // SystemNotifications from displaying a 404 event
-      // when /sitemap.xml is requested. Additionall,
+      // when /sitemap.xml is requested. Additionally,
       // it prevents further modification to the sitemap.
       $event->replace = true;
       $event->cancelHooks = true;
@@ -398,5 +401,320 @@ class MarkupSitemap extends WireData implements Module
   protected function siteUsesLanguageSupportPageNames()
   {
     return $this->modules->isInstalled('LanguageSupportPageNames');
+  }
+
+  /**
+   * Add alternative languges, including current.
+   * @param Page $page
+   * @param Url  $url
+   */
+  protected function addAltLanguages($page, $url)
+  {
+    foreach ($this->languages as $altLanguage) {
+      if ($this->pageLanguageInvalid($altLanguage, $page)) {
+        continue;
+      }
+      if ($altLanguage->isDefault()
+        && $this->pages->get(1)->name === 'home'
+        && !$this->modules->LanguageSupportPageNames->useHomeSegment
+        && !empty($this->sitemap_default_iso)) {
+        $languageIsoName = $this->sitemap_default_iso;
+      } else {
+        $languageIsoName = $this->pages->get(1)->localName($altLanguage);
+      }
+      $url->addSubElement(new Link($languageIsoName, $page->localHttpUrl($altLanguage)));
+    }
+  }
+
+  /**
+   * Generate an image tag for the current image in the loop
+   * @param  Pageimage $image
+   * @param  Language  $language
+   * @return Image
+   */
+  protected function addImage($image, $language = null)
+  {
+    $locImage = new Image($image->httpUrl);
+    foreach (self::IMAGE_FIELDS as $imageMetaMethod => $imageMetaValues) {
+      foreach (explode('|', $imageMetaValues) as $imageMetaValue) {
+        if ($language != null && !$language->isDefault() && $image->{"$imageMetaValue{$language->id}"}) {
+          $imageMetaValue .= $language->id;
+        }
+        if ($image->$imageMetaValue) {
+          if ($imageMetaMethod === 'License') {
+            // Skip invalid licence URLs
+            if (!filter_var($image->$imageMetaValue, FILTER_VALIDATE_URL)) {
+              continue;
+            }
+          }
+          $locImage->{"set{$imageMetaMethod}"}($image->$imageMetaValue);
+        }
+      }
+    }
+
+    return $locImage;
+  }
+
+  /**
+   * Add images to the current Url
+   * @param Url      $url
+   * @param Language $language
+   */
+  protected function addImages($page, $url, $language = null)
+  {
+    // Loop through declared image fields and skip non image fields
+    if ($this->sitemap_image_fields) {
+      foreach ($this->sitemap_image_fields as $imageFieldName) {
+        $page->of(false);
+        $imageField = $page->$imageFieldName;
+        if ($imageField) {
+          foreach ($imageField as $image) {
+            if ($image instanceof Pageimage || $image instanceof \ProcessWire\Pageimage) {
+              $url->addSubElement($this->addImage($image, $language));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Determine if a page can be included in the sitemap
+   * @param  $page
+   * @param  $options
+   * @return bool
+   */
+  public function pageIsIncludible($page, $options)
+  {
+    // If it's the home page, it's always includible.
+    if ($page->id === 1) {
+      return true;
+    }
+
+    // If the page's template is excluded from accessing Sitemap,
+    // then it's not includible.
+    if (in_array($page->template->name, $this->sitemap_exclude_templates)) {
+      return false;
+    }
+
+    // Otherwise, check to see if the page itself has been excluded
+    // via Sitemap options.
+    return !$options['excludes']['page'];
+  }
+
+  /**
+   * Recursively add pages in each language with
+   * alternate language and image sub-elements.
+   * @param  $page
+   */
+  protected function addPages($page)
+  {
+    // Get the saved options for this page
+    $pageSitemapOptions = $this->modules->getConfig($this, "o{$page->id}");
+
+    // If the template that this page belongs to is not using sitemap options
+    // (per the module's current configuration), then we need to revert the keys
+    // in $pageSitemapOptions to their defaults so as to prevent their
+    // saved options from being used in this cycle.
+    if ($this->sitemap_include_templates !== null
+      && !in_array($page->template->name, $this->sitemap_include_templates)
+      && is_array($pageSitemapOptions)) {
+      array_walk_recursive($pageSitemapOptions, function (&$value) {
+        $value = false;
+      });
+    }
+
+    // If the page is viewable and not excluded or we’re working with the root page,
+    // begin generating the sitemap by adding pages recursively. (Root is always added.)
+    if ($page->viewable() && $this->pageIsIncludible($page, $pageSitemapOptions)) {
+      // If language support is enabled, then we need to loop through each language
+      // to generate <loc> for each language with all alternates, including the
+      // current language. Then add image references with multi-language support.
+      if ($this->siteUsesLanguageSupportPageNames()) {
+        foreach ($this->languages as $language) {
+          if ($this->pageLanguageInvalid($language, $page) || !$page->viewable($language)) {
+            continue;
+          }
+          $url = new Url($page->localHttpUrl($language));
+          $url->setLastMod(date('c', $page->modified));
+          $this->addAltLanguages($page, $url);
+          if ($pageSitemapOptions['priority']) {
+            $url->setPriority($this->formatPriorityFloat($pageSitemapOptions['priority']));
+          }
+          if (!$pageSitemapOptions['excludes']['images']) {
+            $this->addImages($page, $url, $language);
+          }
+          $this->urlSet->addUrl($url);
+        }
+      } else {
+        // If multi-language support is not enabled, then we only need to
+        // add the current URL to a new <loc>, along with images.
+        $url = new Url($page->httpUrl);
+        $url->setLastMod(date('c', $page->modified));
+        if ($pageSitemapOptions['priority']) {
+          $url->setPriority($this->formatPriorityFloat($pageSitemapOptions['priority']));
+        }
+        if (!$pageSitemapOptions['excludes']['images']) {
+          $this->addImages($page, $url);
+        }
+        $this->urlSet->addUrl($url);
+      }
+    }
+
+    // Check for children
+    if (!$pageSitemapOptions['excludes']['children']) {
+
+      // Build up the child selector.
+      $selector = "id!={$this->config->http404PageID}";
+      if ($this->sitemap_include_hidden) {
+        $selector = implode(',', [
+          'include=hidden',
+          'template!=admin',
+          $selector,
+        ]);
+      }
+
+      // Check for children and include where possible.
+      if ($page->hasChildren($selector)) {
+        foreach ($page->children($selector) as $child) {
+          $this->addPages($child);
+        }
+      }
+    }
+  }
+
+  /**
+   * Build a new sitemap (called when cache doesn't have one or we're debugging)
+   * @return string
+   */
+  protected function buildNewSitemap($rootPage)
+  {
+    $this->urlSet = new Urlset();
+    $this->addPages($this->pages->get($rootPage));
+    $sitemapOutput = new Output();
+    if ($this->sitemap_stylesheet) {
+      $sitemapOutput->addProcessingInstruction(
+        'xml-stylesheet',
+        'type="text/xsl" href="' . $this->getStylesheetUrl() . '"'
+      );
+    }
+
+    return $sitemapOutput->setIndented(true)->getOutput($this->urlSet);
+  }
+
+  /**
+   * If using a stylesheet, return its absolute URL.
+   * @return string
+   */
+  protected function getStylesheetUrl()
+  {
+    if ($this->sitemap_stylesheet_custom
+      && filter_var($this->sitemap_stylesheet_custom, FILTER_VALIDATE_URL)) {
+      return $this->sitemap_stylesheet_custom;
+    }
+
+    return $stylesheetPath = $this->urls->httpSiteModules . 'MarkupSitemap/assets/sitemap-stylesheet.xsl';
+  }
+
+  /**
+   * Dump vars and die.
+   *
+   * @param  mixed  $mixed The vars to dump
+   * @return void
+   */
+  protected function dd()
+  {
+    $this->dump(func_get_args()) && die;
+  }
+
+  /**
+   * Dump vars.
+   *
+   * @param  mixed  $mixed The vars to dump
+   * @return void
+   */
+  protected function dump()
+  {
+    $this->header();
+    array_map(
+      function ($mixed) {
+        var_dump($mixed);
+      },
+      func_get_args()
+    );
+
+    return true;
+  }
+
+  /**
+   * Prepare the content-type header
+   *
+   * @return void
+   */
+  protected function header()
+  {
+    $header = 'Content-Type: text/plain';
+    if (!$this->headerPrepared($header)) {
+      header($header);
+      $this->timestamp = -microtime(true);
+    }
+  }
+
+  /**
+   * Determine if a header has been prepared.
+   *
+   * @param  $header
+   * @return bool
+   */
+  protected function headerPrepared($header)
+  {
+    $header = trim($header, ': ');
+
+    foreach (headers_list() as $listedHeader) {
+      if (stripos($listedHeader, $header) !== false) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Print vars and die.
+   *
+   * @param  mixed  $mixed The vars to print
+   * @return void
+   */
+  protected function pd()
+  {
+    $this->printVars(func_get_args()) && die;
+  }
+
+  /**
+   * Print vars.
+   *
+   * @param  mixed  $mixed The vars to print
+   * @return void
+   */
+  protected function printVars()
+  {
+    $this->header();
+    array_map(
+      function ($mixed) {
+        print_r($mixed);
+      },
+      func_get_args()
+    );
+
+    return true;
+  }
+
+  /**
+   * Log things to a dedicated log file.
+   * @param $content
+   */
+  protected function logme($content)
+  {
+    if ($this->config->debug) $this->log->save('markup-sitemap', $content);
   }
 }

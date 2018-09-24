@@ -12,11 +12,11 @@
 
 require_once __DIR__ . '/ClassLoader.php';
 
-use Rockett\Traits\FieldsTrait as BuildsFields;
+use Rockett\Traits\FieldsTrait;
 
 class MarkupSitemapConfig extends ModuleConfig
 {
-  use BuildsFields;
+  use FieldsTrait;
 
   /**
    * Get default condifguration, automatically passed to input fields.
@@ -25,9 +25,9 @@ class MarkupSitemapConfig extends ModuleConfig
   public function getDefaults()
   {
     return [
-      // This has been turned on by default due to the fact that
-      // the default XML output is not rendered properly (not sure why)
       'sitemap_stylesheet' => true,
+      'sitemap_exclude_templates' => [],
+      'sitemap_include_hidden' => false,
     ];
   }
 
@@ -114,6 +114,14 @@ class MarkupSitemapConfig extends ModuleConfig
       ]));
     }
 
+    $inputfields->add($this->buildInputField('Checkbox', [
+      'name+id' => 'sitemap_include_hidden',
+      'label' => $this->_('Include hidden or unpublished pages'),
+      'description' => $this->_('When scanning for children, those that are hidden or unpublished will be included when this option is enabled.'),
+      'icon' => 'eye-slash',
+      'collapsed' => Inputfield::collapsedBlank,
+    ]));
+
     // Create the stylesheet fieldset
     $stylesheetFieldset = $this->buildInputField('Fieldset', [
       'label' => $this->_('Stylesheet'),
@@ -124,7 +132,6 @@ class MarkupSitemapConfig extends ModuleConfig
     // Add the stylesheet checkbox
     $stylesheetFieldset->add($this->buildInputField('Checkbox', [
       'name+id' => 'sitemap_stylesheet',
-      // 'label' => $this->_('Sitemap Stylesheet'),
       'label' => $this->_('Add a stylesheet to the sitemap'),
     ]));
 
