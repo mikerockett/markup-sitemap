@@ -28,6 +28,8 @@ class MarkupSitemapConfig extends ModuleConfig
       'sitemap_stylesheet' => true,
       'sitemap_exclude_templates' => [],
       'sitemap_include_hidden' => false,
+      'cache_method' => 'MarkupCache',
+      'cache_ttl' => 3600,
     ];
   }
 
@@ -149,6 +151,39 @@ class MarkupSitemapConfig extends ModuleConfig
 
     // Add the stylesheet fieldset to the inputfields
     $inputfields->add($stylesheetFieldset);
+
+    // Create the cache fieldset
+    $cacheFieldset = $this->buildInputField('Fieldset', [
+      'label' => $this->_('Cache'),
+      'collapsed' => Inputfield::collapsedBlank,
+      'icon' => 'database',
+    ]);
+
+    // Add the cache method select field
+    $cacheFieldset->add($this->buildInputField('Select', [
+      'name+id' => 'cache_method',
+      'label' => $this->_('Choose the cache method'),
+      'description' => $this->_('MarkupCache (default) stores cached content as files on disk. WireCache stores cached content into database.'),
+      'icon' => 'floppy-o',
+      'options' => [
+          'MarkupCache' => 'MarkupCache',
+          'WireCache' => 'WireCache',
+      ],
+    ]));
+
+    // Add the cache expire time (TTL) input
+    $cacheFieldset->add($this->buildInputField('Integer', [
+      'name+id' => 'cache_ttl',
+      'label' => $this->_('Cache expire time (TTL)'),
+      'description' => $this->_('Type in the expire time for the cache as a number of seconds.'),
+      'notes' => $this->_('The default value is **3600**.'),
+      'min' => 1,
+      'icon' => 'clock-o',
+      'collapsed' => Inputfield::collapsedBlank,
+    ]));
+
+    // Add the stylesheet fieldset to the inputfields
+    $inputfields->add($cacheFieldset);
 
     // Add the support-development markup field
     $supportText = $this->wire('sanitizer')->entitiesMarkdown($this->_('Sitemap is proudly [open-source](http://opensource.com/resources/what-open-source) and is [free to use](https://en.wikipedia.org/wiki/Free_software) for personal and commercial projects. Please consider [making a small donation](https://rockett.pw/donate) in support of the development of MarkupSitemap and other modules.'), ['fullMarkdown' => true]);

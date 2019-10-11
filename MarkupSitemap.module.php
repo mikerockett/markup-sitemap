@@ -219,8 +219,9 @@ class MarkupSitemap extends WireData implements Module
    * consideration to multi-site setups) and passing it to the
    * first/parent recursive render-method (addPages).
    *
-   * MarkupCache is used to cache the entire sitemap, and the cache
-   * is destroyed when settings are saved and, if set up, a page is saved.
+   * Depending on config settings entire sitemap is cached using MarkupCache or
+   * WireCache, and the cache is destroyed when settings are saved and, if set
+   * up, a page is saved.
    *
    * @param HookEvent $event
    */
@@ -239,20 +240,9 @@ class MarkupSitemap extends WireData implements Module
 
     // Make sure that the root page exists.
     if (!$this->pages->get($rootPage) instanceof NullPage) {
-      // Check for cached sitemap or regenerate if it doesn't exist
-      $markupCache = $this->modules->MarkupCache;
-
-      if ((!$output = $markupCache->get('MarkupSitemap', 3600)) || $this->config->debug) {
-        $output = $this->buildNewSitemap($rootPage);
-        $markupCache->save($output);
-        header('X-Cached-Sitemap: no');
-      } else {
-        header('X-Cached-Sitemap: yes');
-      }
-
+      // Get cached sitemap
+      $event->return = $this->getCached($rootPage);
       header('Content-Type: application/xml', true, 200);
-
-      $event->return = $output;
 
       // Prevent further hooks. This stops
       // SystemNotifications from displaying a 404 event
@@ -261,6 +251,45 @@ class MarkupSitemap extends WireData implements Module
       $event->replace = true;
       $event->cancelHooks = true;
     }
+  }
+
+  /**
+   * Get cached sitemap markup
+   *
+   * @param string $rootPage
+   * @return string
+   */
+  protected function getCached($rootPage)
+  {
+    // Bail out early if debug mode is enabled
+    if ($this->config->debug) {
+      header('X-Cached-Sitemap: no');
+      return $this->buildNewSitemap($rootPage);
+    }
+
+    // Cache settings
+    $cacheTTL = $this->cache_ttl ?: 3600;
+    $cacheKey = 'MarkupSitemap';
+    $cacheMethod = $this->cache_method ?: 'MarkupCache';
+
+    // Attempt to fetch sitemap from cache
+    $cache = $cacheMethod == 'WireCache' ? $this->cache : $this->modules->MarkupCache;
+    $output = $cache->get($cacheKey, $cacheTTL);
+
+    // If output is empty, generate and cache new sitemap
+    if (empty($output)) {
+      header('X-Cached-Sitemap: no');
+      $output = $this->buildNewSitemap($rootPage);
+      if ($cacheMethod == 'WireCache') {
+        $cache->save($cacheKey, $output, $cacheTTL);
+      } else {
+        $cache->save($output);
+      }
+      return $output;
+    }
+
+    header('X-Cached-Sitemap: yes');
+    return $output;
   }
 
   /**
