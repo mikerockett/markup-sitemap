@@ -50,7 +50,7 @@ In the module’s configuration, you can also disable the stylesheet, which is t
 
 #### Cache
 
-By default, Sitemap will cache the output of your sitemap to improve request-performance. Thanks to an update [@teppo](https://processwire.com/talk/profile/175-teppo/), you can now select the caching method you’d like to use (MarkupCache or WireCache, the former being the default), and set the Cache TTL (expiry period).
+By default, Sitemap will cache the output of your sitemap to improve request-performance. Thanks to an update from [@teppo](https://processwire.com/talk/profile/175-teppo/), you can now select the caching method you’d like to use (MarkupCache or WireCache, the former being the default), and set the Cache TTL (expiry period).
 
 #### ISO code for default language
 
