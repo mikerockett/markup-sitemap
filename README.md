@@ -48,10 +48,6 @@ If you’d like to include images in your sitemap (for somewhat enhanced Google 
 
 In the module’s configuration, you can also disable the stylesheet, which is turned on be default. If you’d like to use your own, you’ll need to specify an absolute URL to it (also be sure to use one that has mult-language and sub-element features).
 
-#### Cache
-
-By default, Sitemap will cache the output of your sitemap to improve request-performance. Thanks to an update from [@teppo](https://processwire.com/talk/profile/175-teppo/), you can now select the caching method you’d like to use (MarkupCache or WireCache, the former being the default), and set the Cache TTL (expiry period).
-
 #### ISO code for default language
 
 If you’ve set your home page to not include a language ISO (default language name) **and** your home page’s default language name is empty, then you can set an ISO code here for the default language. This will prevent the sitemap from containing `hreflang="home"` for all default-language URLs.
@@ -59,6 +55,10 @@ If you’ve set your home page to not include a language ISO (default language n
 #### Page priority
 
 On each page that has sitemap options, you can set a priority between 0.0 and 1.0. You may not need to use this any many cases, but you may wish to give emphasis to certain child pages over their parents. Search engines tend to use other factors in determining priority, and so this option is not guaranteed to make a difference to your rankings.
+
+#### Cache
+
+By default, Sitemap will cache the output of your sitemap to improve request-performance. Thanks to an update from [@teppo](https://processwire.com/talk/profile/175-teppo/), you can now select the caching method you’d like to use (MarkupCache or WireCache, the former being the default), and set the Cache TTL (expiry period).
 
 ---
 
