@@ -127,7 +127,7 @@ class MarkupSitemapConfig extends ModuleConfig
     // Create the stylesheet fieldset
     $stylesheetFieldset = $this->buildInputField('Fieldset', [
       'label' => $this->_('Stylesheet'),
-      'collapsed' => Inputfield::collapsedBlank,
+      'collapsed' => Inputfield::collapsedYes,
       'icon' => 'css3',
     ]);
 
@@ -155,29 +155,32 @@ class MarkupSitemapConfig extends ModuleConfig
     // Create the cache fieldset
     $cacheFieldset = $this->buildInputField('Fieldset', [
       'label' => $this->_('Cache'),
-      'collapsed' => Inputfield::collapsedBlank,
+      'collapsed' => Inputfield::collapsedYes,
       'icon' => 'database',
     ]);
 
-    // Add the cache method select field
+    // Add the cache method select inputfield
     $cacheFieldset->add($this->buildInputField('Select', [
       'name+id' => 'cache_method',
-      'label' => $this->_('Choose the cache method'),
-      'description' => $this->_('MarkupCache (default) stores cached content as files on disk. WireCache stores cached content into database.'),
+      'label' => $this->_('Cache Method'),
+      'description' => $this->_('Select the sitemap-caching method you’d like to use.'),
+      'notes' => $this->_('Default: **MarkupCache**.'),
       'icon' => 'floppy-o',
+      'columnWidth' => 50,
       'options' => [
-          'MarkupCache' => 'MarkupCache',
-          'WireCache' => 'WireCache',
+        'MarkupCache' => 'MarkupCache (caches the sitemap on the filesystem)',
+        'WireCache' => 'WireCache (caches the sitemap in the database)',
       ],
     ]));
 
-    // Add the cache expire time (TTL) input
+    // Add the cache expiry (TTL) inputfield
     $cacheFieldset->add($this->buildInputField('Integer', [
       'name+id' => 'cache_ttl',
-      'label' => $this->_('Cache expire time (TTL)'),
-      'description' => $this->_('Type in the expire time for the cache as a number of seconds.'),
-      'notes' => $this->_('The default value is **3600**.'),
+      'label' => $this->_('Cache Expiry (TTL)'),
+      'description' => $this->_('How long should the sitemap be cached before it expires and is regenerated?'),
+      'notes' => $this->_('Default: **3600**.'),
       'min' => 1,
+      'columnWidth' => 50,
       'icon' => 'clock-o',
       'collapsed' => Inputfield::collapsedBlank,
     ]));
