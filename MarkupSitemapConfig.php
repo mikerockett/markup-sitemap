@@ -164,7 +164,7 @@ class MarkupSitemapConfig extends ModuleConfig
       'name+id' => 'cache_method',
       'label' => $this->_('Cache Method'),
       'description' => $this->_('Select the sitemap-caching method you’d like to use.'),
-      'notes' => $this->_('Default: **MarkupCache**.'),
+      'notes' => $this->_('Default: **MarkupCache**'),
       'icon' => 'floppy-o',
       'columnWidth' => 50,
       'options' => [
@@ -178,7 +178,7 @@ class MarkupSitemapConfig extends ModuleConfig
       'name+id' => 'cache_ttl',
       'label' => $this->_('Cache Expiry (TTL)'),
       'description' => $this->_('How long should the sitemap be cached before it expires and is regenerated?'),
-      'notes' => $this->_('Default: **3600**.'),
+      'notes' => $this->_('Default: **3600**'),
       'min' => 1,
       'columnWidth' => 50,
       'icon' => 'clock-o',
