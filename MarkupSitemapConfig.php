@@ -182,7 +182,6 @@ class MarkupSitemapConfig extends ModuleConfig
       'min' => 1,
       'columnWidth' => 50,
       'icon' => 'clock-o',
-      'collapsed' => Inputfield::collapsedBlank,
     ]));
 
     // Add the stylesheet fieldset to the inputfields
