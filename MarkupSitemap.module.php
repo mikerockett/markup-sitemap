@@ -12,6 +12,7 @@
 // Require the classloaders
 wire('classLoader')->addNamespace('Thepixeldeveloper\Sitemap', __DIR__ . '/src/Sitemap');
 wire('classLoader')->addNamespace('Rockett\Concerns', __DIR__ . '/src/Concerns');
+wire('classLoader')->addNamespace('Rockett\Support', __DIR__ . '/src/Support');
 
 use Thepixeldeveloper\Sitemap\Url;
 use Thepixeldeveloper\Sitemap\Urlset;
@@ -20,6 +21,7 @@ use Thepixeldeveloper\Sitemap\Drivers\XmlWriterDriver;
 
 use Rockett\Concerns;
 use Rockett\Support\ParseFloat;
+use Rockett\Support\ParseTimestamp;
 
 use ProcessWire\WireException;
 use ProcessWire\Page;
@@ -267,28 +269,37 @@ class MarkupSitemap extends WireData implements Module
   }
 
   /**
-   * Add alternative languges, including current.
+   * Add languages to the location entry.
    *
    * @param Page $page
    * @param Url $url
    * @return void
    */
-  protected function addAltLanguages(Page $page, Url $url): void
+  protected function addLanguages(Page $page, Url $url): void
   {
     foreach ($this->languages as $altLanguage) {
-      if ($this->pageLanguageInvalid($altLanguage, $page)) {
-        continue;
-      }
-      if ($altLanguage->isDefault()
-        && $this->pages->get(1)->name === 'home'
-        && !$this->modules->LanguageSupportPageNames->useHomeSegment
-        && !empty($this->sitemap_default_iso)) {
-        $languageIsoName = $this->sitemap_default_iso;
-      } else {
-        $languageIsoName = $this->pages->get(1)->localName($altLanguage);
-      }
+      if ($this->pageLanguageInvalid($altLanguage, $page)) continue;
+      $languageIsoName = $this->getLanguageIsoName($altLanguage);
       $url->addExtension(new Link($languageIsoName, $page->localHttpUrl($altLanguage)));
     }
+  }
+
+  /**
+   * Get a language's ISO name
+   *
+   * @param Language $laguage
+   * @return string
+   */
+  protected function getLanguageIsoName(Language $language): string
+  {
+    $usesDefaultIso = $language->isDefault()
+      && $this->pages->get(1)->name === 'home'
+      && !$this->modules->LanguageSupportPageNames->useHomeSegment
+      && !empty($this->sitemap_default_iso);
+
+    return $usesDefaultIso
+      ? $this->sitemap_default_iso
+      : $this->pages->get(1)->localName($language);
   }
 
   /**
@@ -353,8 +364,8 @@ class MarkupSitemap extends WireData implements Module
           }
 
           $url = new Url($page->localHttpUrl($language));
-          $url->setLastMod(new DateTime(date('c', $page->modified)));
-          $this->addAltLanguages($page, $url);
+          $url->setLastMod(ParseTimestamp::fromInt($page->modified));
+          $this->addLanguages($page, $url);
 
           if ($pageSitemapOptions['priority']) {
             $url->setPriority(ParseFloat::asString($pageSitemapOptions['priority']));
@@ -370,7 +381,7 @@ class MarkupSitemap extends WireData implements Module
         // If multi-language support is not enabled, then we only need to
         // add the current URL to a new <loc>, along with images.
         $url = new Url($page->httpUrl);
-        $url->setLastMod(new DateTime(date('c', $page->modified)));
+        $url->setLastMod(ParseTimestamp::fromInt($page->modified));
 
         if ($pageSitemapOptions['priority']) {
           $url->setPriority(ParseFloat::asString($pageSitemapOptions['priority']));
