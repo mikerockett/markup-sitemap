@@ -4,6 +4,7 @@
   "type": "pw-module",
   "license": "ISC",
   "require": {
+    "php": "^7.1",
     "wireframe-framework/processwire-composer-installer": "^1.0"
   }
 }
