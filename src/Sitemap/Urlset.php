@@ -4,15 +4,15 @@ namespace Thepixeldeveloper\Sitemap;
 
 use Thepixeldeveloper\Sitemap\Interfaces\DriverInterface;
 
-class SitemapIndex extends Collection
+class Urlset extends Collection
 {
     public function type(): string
     {
-        return Sitemap::class;
+        return Url::class;
     }
 
     public function accept(DriverInterface $driver)
     {
-        $driver->visitSitemapIndex($this);
+        $driver->visitUrlset($this);
     }
 }

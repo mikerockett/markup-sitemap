@@ -1,69 +1,42 @@
-<?php
+<?php declare(strict_types=1);
 
-/**
- * Sitemap for PHP. Eloquent sitemap creation with sub-element support.
- * https://github.com/ThePixelDeveloper/Sitemap/
- * Local fork maintained by Mike Rockett for MarkupSitemap.
- *
- * @copyright 2013, Mathew Davies <thepixeldeveloper@googlemail.com>
- * @license   MIT
- */
+namespace Thepixeldeveloper\Sitemap;
 
-namespace Rockett\Sitemap;
+use DateTimeInterface;
+use Thepixeldeveloper\Sitemap\Interfaces\DriverInterface;
+use Thepixeldeveloper\Sitemap\Interfaces\VisitorInterface;
 
-use Rockett\Sitemap\Contracts\OutputContract;
-use XMLWriter;
-
-/**
- * Class Sitemap
- *
- * @package Rockett\Sitemap
- */
-class Sitemap implements OutputContract
+class Sitemap implements VisitorInterface
 {
-    /**
-     * Last modified time.
-     *
-     * @var string
-     */
-    protected $lastMod;
-
     /**
      * Location (URL).
      *
      * @var string
      */
-    protected $loc;
+    private $loc;
 
     /**
-     * Url constructor
+     * Last modified time.
      *
-     * @param string $loc
+     * @var DateTimeInterface
      */
-    public function __construct($loc)
+    private $lastMod;
+
+    public function __construct(string $loc)
     {
         $this->loc = $loc;
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    public function generateXML(XMLWriter $XMLWriter)
+    public function getLoc(): string
     {
-        $XMLWriter->startElement('sitemap');
-        $XMLWriter->writeElement('loc', $this->getLoc());
-
-        if ($lastMod = $this->getLastMod()) {
-            $XMLWriter->writeElement('lastmod', $lastMod);
-        }
-
-        $XMLWriter->endElement();
+        return $this->loc;
     }
 
     /**
-     * Get the last modification time.
-     *
-     * @return string|null
+     * @return DateTimeInterface
      */
     public function getLastMod()
     {
@@ -71,25 +44,15 @@ class Sitemap implements OutputContract
     }
 
     /**
-     * Get location (URL).
-     *
-     * @return string
+     * @param DateTimeInterface $lastMod
      */
-    public function getLoc()
-    {
-        return $this->loc;
-    }
-
-    /**
-     * Set the last modification time.
-     *
-     * @param  string  $lastMod
-     * @return $this
-     */
-    public function setLastMod($lastMod)
+    public function setLastMod(DateTimeInterface $lastMod)
     {
         $this->lastMod = $lastMod;
+    }
 
-        return $this;
+    public function accept(DriverInterface $driver)
+    {
+        $driver->visitSitemap($this);
     }
 }

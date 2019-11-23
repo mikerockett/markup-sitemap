@@ -2,27 +2,27 @@
 
 /**
  * Sitemap for ProcessWire
- *
  * Module config class
  *
- * @author Mike Rockett <github@rockett.pw>
- * @copyright 2017-18
+ * @author Mike Rockett <mike@rockett.pw>
+ * @copyright 2017-19
  * @license ISC
  */
 
-require_once __DIR__ . '/ClassLoader.php';
+wire('classLoader')->addNamespace('Rockett\Concerns', __DIR__ . '/src/Concerns');
 
-use Rockett\Traits\FieldsTrait;
+use Rockett\Concerns\BuildsInputFields;
 
 class MarkupSitemapConfig extends ModuleConfig
 {
-  use FieldsTrait;
+  use BuildsInputFields;
 
   /**
    * Get default condifguration, automatically passed to input fields.
+   *
    * @return array
    */
-  public function getDefaults()
+  public function getDefaults(): array
   {
     return [
       'sitemap_stylesheet' => true,
@@ -35,17 +35,20 @@ class MarkupSitemapConfig extends ModuleConfig
 
   /**
    * Render input fields on config Page.
+   *
    * @return string
    */
-  public function getInputFields()
+  public function getInputFields(): string
   {
     // Gather a list of templates
     $allTemplates = $this->templates;
+
     foreach ($allTemplates as $template) {
       // Exclude system templates
       if ($template->flags & Template::flagSystem) {
         continue;
       }
+
       $templates[] = $template;
     }
 
@@ -204,9 +207,10 @@ class MarkupSitemapConfig extends ModuleConfig
 
   /**
    * Remove the sitemap cache
+   *
    * @return bool
    */
-  protected function removeSitemapCache()
+  protected function removeSitemapCache(): bool
   {
     try {
       $cachePath = $this->config->paths->cache . 'MarkupCache/MarkupSitemap';
@@ -220,9 +224,10 @@ class MarkupSitemapConfig extends ModuleConfig
 
   /**
    * Determine if the site uses the LanguageSupportPageNames module.
+   *
    * @return bool
    */
-  protected function siteUsesLanguageSupportPageNames()
+  protected function siteUsesLanguageSupportPageNames(): bool
   {
     return $this->modules->isInstalled('LanguageSupportPageNames');
   }

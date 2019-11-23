@@ -3,20 +3,22 @@
 /**
  * Field helpers for ProcessWire
  * Allows field-building on the fly.
- * Add namespace and `use FieldsTrait` in your class.
+ * Add namespace and `use BuildsInputFields` in your class.
  *
  * @author  Mike Rockett
  * @license ISC
  */
 
-namespace Rockett\Traits;
+namespace Rockett\Concerns;
 
-trait FieldsTrait
+trait BuildsInputFields
 {
   /**
    * Given a fieldtype, create, populate, and return an Inputfield
-   * @param  string       $fieldNameId
-   * @param  array        $meta
+   *
+   * @param  string $fieldNameId
+   * @param  array $meta
+   *
    * @return Inputfield
    */
   protected function buildInputField($fieldNameId, $meta)
