@@ -14,18 +14,16 @@ wire('classLoader')->addNamespace('Thepixeldeveloper\Sitemap', __DIR__ . '/src/S
 wire('classLoader')->addNamespace('Rockett\Concerns', __DIR__ . '/src/Concerns');
 wire('classLoader')->addNamespace('Rockett\Support', __DIR__ . '/src/Support');
 
-use Thepixeldeveloper\Sitemap\Url;
-use Thepixeldeveloper\Sitemap\Urlset;
-use Thepixeldeveloper\Sitemap\Extensions\Link;
-use Thepixeldeveloper\Sitemap\Drivers\XmlWriterDriver;
-
+use ProcessWire\Language;
+use ProcessWire\Page;
+use ProcessWire\WireException;
 use Rockett\Concerns;
 use Rockett\Support\ParseFloat;
 use Rockett\Support\ParseTimestamp;
-
-use ProcessWire\WireException;
-use ProcessWire\Page;
-use ProcessWire\Language;
+use Thepixeldeveloper\Sitemap\Drivers\XmlWriterDriver;
+use Thepixeldeveloper\Sitemap\Extensions\Link;
+use Thepixeldeveloper\Sitemap\Url;
+use Thepixeldeveloper\Sitemap\Urlset;
 
 class MarkupSitemap extends WireData implements Module
 {
@@ -51,6 +49,18 @@ class MarkupSitemap extends WireData implements Module
    * Sitemap URI
    */
   const sitemapUri = '/sitemap.xml';
+
+  /**
+   * The name of the additional pages hook
+   */
+  const getAdditionalPages = 'MarkupSitemap::getAdditionalPages';
+
+  /**
+   * Determine whether language support hooks have been added.
+   *
+   * @var bool
+   */
+  private static $languageSupportHooksApplied;
 
   /**
    * Current request URI
@@ -112,16 +122,11 @@ class MarkupSitemap extends WireData implements Module
       // Add the relevant page hooks for multi-language support
       // as these are not bootstrapped at the 404 event (for some reason...)
       if ($this->siteUsesLanguageSupportPageNames()) {
-        foreach (['localHttpUrl', 'localName'] as $pageHook) {
-          $pageHookFunction = 'hookPage' . ucfirst($pageHook);
-          $this->addHook("Page::{$pageHook}", null, function ($event) use ($pageHookFunction) {
-            $this->modules->LanguageSupportPageNames->{$pageHookFunction}($event);
-          });
-        }
+        static::applyLanguageSupportHooks();
       }
 
       // Add the hook to process and render the sitemap.
-      $this->addHookBefore('ProcessPageView::pageNotFound', $this, 'render');
+      $this->addHookAfter('ProcessPageView::pageNotFound', $this, 'render');
     }
 
     // Add hook to render Sitemap fields on the Settings tab of each page
@@ -134,6 +139,24 @@ class MarkupSitemap extends WireData implements Module
     // events to remove sitemap options for deleted pages
     if ($this->user->hasPermission('page-delete')) {
       $this->addHookAfter('Pages::deleted', $this, 'deletePageSitemapOptions');
+    }
+  }
+
+  /**
+   * Add the relevant page hooks for multi-language support
+   *
+   * @return void
+   */
+  public static function applyLanguageSupportHooks(): void
+  {
+    if (!static::$languageSupportHooksApplied) {
+      foreach (['localUrl', 'localHttpUrl', 'localName'] as $pageHook) {
+        $pageHookFunction = 'hookPage' . ucfirst($pageHook);
+        wire()->addHook("Page::{$pageHook}", null, function ($event) use ($pageHookFunction) {
+          wire('modules')->LanguageSupportPageNames->{$pageHookFunction}($event);
+        });
+      }
+      static::$languageSupportHooksApplied = true;
     }
   }
 
@@ -278,7 +301,10 @@ class MarkupSitemap extends WireData implements Module
   protected function addLanguages(Page $page, Url $url): void
   {
     foreach ($this->languages as $altLanguage) {
-      if ($this->pageLanguageInvalid($altLanguage, $page)) continue;
+      if ($this->pageLanguageInvalid($altLanguage, $page)) {
+        continue;
+      }
+
       $languageIsoName = $this->getLanguageIsoName($altLanguage);
       $url->addExtension(new Link($languageIsoName, $page->localHttpUrl($altLanguage)));
     }
@@ -293,13 +319,13 @@ class MarkupSitemap extends WireData implements Module
   protected function getLanguageIsoName(Language $language): string
   {
     $usesDefaultIso = $language->isDefault()
-      && $this->pages->get(1)->name === 'home'
-      && !$this->modules->LanguageSupportPageNames->useHomeSegment
-      && !empty($this->sitemap_default_iso);
+    && $this->pages->get(1)->name === 'home'
+    && !$this->modules->LanguageSupportPageNames->useHomeSegment
+    && !empty($this->sitemap_default_iso);
 
     return $usesDefaultIso
-      ? $this->sitemap_default_iso
-      : $this->pages->get(1)->localName($language);
+    ? $this->sitemap_default_iso
+    : $this->pages->get(1)->localName($language);
   }
 
   /**
@@ -376,6 +402,7 @@ class MarkupSitemap extends WireData implements Module
           }
 
           $this->urlSet->add($url);
+          $this->addAdditionalPages($page, $language);
         }
       } else {
         // If multi-language support is not enabled, then we only need to
@@ -392,6 +419,7 @@ class MarkupSitemap extends WireData implements Module
         }
 
         $this->urlSet->add($url);
+        $this->addAdditionalPages($page);
       }
     }
 
@@ -414,6 +442,57 @@ class MarkupSitemap extends WireData implements Module
           $this->addPagesFromRoot($child);
         }
       }
+    }
+  }
+
+  /**
+   * Add additional pages supplied via the getAdditionalPages() hook
+   *
+   * @param Page $page
+   * @param Language $language
+   * @return void
+   */
+  protected function addAdditionalPages(Page $page, Language $language = null): void
+  {
+    $additionalPages = $this->getAdditionalPages($page, $language);
+
+    // Process each page from the data provided in the hook
+    foreach ($additionalPages as $key => $item) {
+      if (!$item['url']) {
+        continue;
+      }
+
+      $url = new Url($item['url']);
+      $modified = isset($item['modified']) ? $item['modified'] : $page->modified;
+
+      $url->setLastMod(ParseTimestamp::fromInt($modified));
+
+      if (isset($item['priority'])) {
+        $url->setPriority(ParseFloat::asString($item['priority']));
+      }
+
+      // If language support is enabled, then we need to loop through each language
+      // and add the alternate URLs of each additional page
+      if ($this->siteUsesLanguageSupportPageNames()) {
+        foreach ($this->languages as $language) {
+          // Generate the additional URLs in the alternate language
+          // and check if the same item is found within the alternate language URLs
+          $urlsInLanguage = $this->getAdditionalPages($page, $language);
+
+          if (isset($urlsInLanguage[$key])) {
+            $languageItem = $urlsInLanguage[$key];
+            if (!$languageItem['url']) {
+              continue;
+            }
+
+            // Add the alternate language URL
+            $languageIsoName = $this->getLanguageIsoName($language);
+            $url->addExtension(new Link($languageIsoName, $languageItem['url']));
+          }
+        }
+      }
+
+      $this->urlSet->add($url);
     }
   }
 
@@ -458,4 +537,35 @@ class MarkupSitemap extends WireData implements Module
 
     return $this->urls->httpSiteModules . 'MarkupSitemap/assets/sitemap-stylesheet.xsl';
   }
+
+  /**
+   * This hook adds support for pages that do not exist in the Page Tree,
+   * such as those build behind a URL segment.
+   *
+   * It receives the actual parent Page as well as the Language, in the case
+   * of a multi-language setup. The return value must b an array of
+   * additional URL objects, containing the following three keys:
+   *
+   * `url` string, required
+   * `modified` int, optional
+   * `priority` float|string, optional
+   *
+   * To associate additional pages with their alternate-language variants, make sure
+   * to add unique keys to the result array. Ex: an index or a language-independent ID.
+   *
+   * @param Page $page
+   * @param Language $language
+   * @return array
+   */
+  protected function ___getAdditionalPages(Page $page, Language $language = null): array
+  {
+    $return = [];
+
+    if ($this->siteUsesLanguageSupportPageNames()) {
+      static::applyLanguageSupportHooks();
+    }
+
+    return $return;
+  }
+
 }
