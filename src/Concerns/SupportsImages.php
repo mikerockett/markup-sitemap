@@ -11,6 +11,7 @@
 
 namespace Rockett\Concerns;
 
+use ProcessWire\Pageimage;
 use Thepixeldeveloper\Sitemap\Extensions\Image;
 
 trait SupportsImages
@@ -60,9 +61,10 @@ trait SupportsImages
       foreach ($this->sitemap_image_fields as $imageFieldName) {
         $page->of(false);
         $imageField = $page->$imageFieldName;
+
         if ($imageField) {
           foreach ($imageField as $image) {
-            if ($image instanceof Pageimage || $image instanceof \ProcessWire\Pageimage) {
+            if ($image instanceof Pageimage) {
               $url->addExtension($this->newImage($image, $language));
             }
           }

@@ -9,6 +9,8 @@
 
 namespace Rockett\Concerns;
 
+use ProcessWire\HookEvent;
+
 trait ProcessesTabs
 {
   /**

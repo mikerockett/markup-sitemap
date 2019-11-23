@@ -9,6 +9,9 @@
 
 namespace Rockett\Concerns;
 
+use ProcessWire\HookEvent;
+use ProcessWire\Inputfield;
+
 trait ConfiguresTabs
 {
   /**

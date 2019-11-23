@@ -21,6 +21,10 @@ use Thepixeldeveloper\Sitemap\Drivers\XmlWriterDriver;
 use Rockett\Concerns;
 use Rockett\Support\ParseFloat;
 
+use ProcessWire\WireException;
+use ProcessWire\Page;
+use ProcessWire\Language;
+
 class MarkupSitemap extends WireData implements Module
 {
   use Concerns\DebugsThings;
@@ -62,16 +66,14 @@ class MarkupSitemap extends WireData implements Module
 
   /**
    * Module installer
-   * Requires ProcessWire 2.8.16+/3.0.16+ (saveConfig; getConfig)
+   * Requires ProcessWire 3.0.16+
+   *
    * @throws WireException
    */
   public function ___install()
   {
-    $processWireVersion = $this->config->version;
-    $applicableMajorMinor = ProcessWire::versionMajor === 2 ? '2.8' : '3.0';
-
-    if (version_compare($processWireVersion, "{$applicableMajorMinor}.16") < 0) {
-      throw new WireException("Requires ProcessWire {$applicableMajorMinor}.16+ to run.");
+    if (version_compare($this->config->version, '3.0.16') < 0) {
+      throw new WireException("Requires ProcessWire 3.0.16+ to run.");
     }
   }
 
@@ -179,7 +181,7 @@ class MarkupSitemap extends WireData implements Module
    * @param string $rootPage
    * @return string
    */
-  protected function getCached($rootPage): string
+  protected function getCached(string $rootPage): string
   {
     // Bail out early if debug mode is enabled
     if ($this->config->debug) {
@@ -245,11 +247,11 @@ class MarkupSitemap extends WireData implements Module
    * Check if the language is not default and that the
    * page is not available/statused in the default language.
    *
-   * @param  string $language
-   * @param  Page   $page
+   * @param Language $language
+   * @param Page $page
    * @return bool
    */
-  protected function pageLanguageInvalid($language, $page): bool
+  protected function pageLanguageInvalid(Language $language, Page $page): bool
   {
     return (!$language->isDefault() && !$page->{"status{$language->id}"});
   }
@@ -266,11 +268,12 @@ class MarkupSitemap extends WireData implements Module
 
   /**
    * Add alternative languges, including current.
+   *
    * @param Page $page
-   * @param Url  $url
+   * @param Url $url
    * @return void
    */
-  protected function addAltLanguages($page, $url): void
+  protected function addAltLanguages(Page $page, Url $url): void
   {
     foreach ($this->languages as $altLanguage) {
       if ($this->pageLanguageInvalid($altLanguage, $page)) {
@@ -291,11 +294,11 @@ class MarkupSitemap extends WireData implements Module
   /**
    * Determine if a page can be included in the sitemap
    *
-   * @param  $page
-   * @param  $options
+   * @param Page $page
+   * @param array $options
    * @return bool
    */
-  public function canBeIncluded($page, $options): bool
+  public function canBeIncluded(Page $page, ?array $options): bool
   {
     // If it's the home page, it's always includible.
     if ($page->id === 1) {
@@ -317,13 +320,13 @@ class MarkupSitemap extends WireData implements Module
    * Recursively add pages in each language with
    * alternate language and image sub-elements.
    *
-   * @param  $page
+   * @param Page $page
    * @return void
    */
-  protected function addPages($page): void
+  protected function addPagesFromRoot(Page $page): void
   {
     // Get the saved options for this page
-    $pageSitemapOptions = $this->modules->getConfig($this, "o{$page->id}");
+    $pageSitemapOptions = $this->modules->getConfig($this, "o$page->id");
 
     // If the template that this page belongs to is not using sitemap options
     // (per the module's current configuration), then we need to revert the keys
@@ -397,7 +400,7 @@ class MarkupSitemap extends WireData implements Module
       // Check for children and include where possible.
       if ($page->hasChildren($selector)) {
         foreach ($page->children($selector) as $child) {
-          $this->addPages($child);
+          $this->addPagesFromRoot($child);
         }
       }
     }
@@ -406,12 +409,13 @@ class MarkupSitemap extends WireData implements Module
   /**
    * Build a new sitemap (called when cache doesn't have one or we're debugging)
    *
+   * @param string $rootPage
    * @return string
    */
-  protected function buildNewSitemap($rootPage): string
+  protected function buildNewSitemap(string $rootPage): string
   {
     $this->urlSet = new Urlset();
-    $this->addPages($this->pages->get($rootPage));
+    $this->addPagesFromRoot($this->pages->get($rootPage));
     $writer = new XmlWriterDriver();
 
     $timestamp = date('c');

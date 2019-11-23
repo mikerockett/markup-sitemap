@@ -12,6 +12,7 @@
 wire('classLoader')->addNamespace('Rockett\Concerns', __DIR__ . '/src/Concerns');
 
 use Rockett\Concerns\BuildsInputFields;
+use ProcessWire\InputfieldWrapper;
 
 class MarkupSitemapConfig extends ModuleConfig
 {
@@ -36,9 +37,9 @@ class MarkupSitemapConfig extends ModuleConfig
   /**
    * Render input fields on config Page.
    *
-   * @return string
+   * @return InputfieldWrapper
    */
-  public function getInputFields(): string
+  public function getInputFields(): InputfieldWrapper
   {
     // Gather a list of templates
     $allTemplates = $this->templates;
