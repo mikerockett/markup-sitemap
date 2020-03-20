@@ -5,7 +5,7 @@
  * Module class
  *
  * @author Mike Rockett <mike@rockett.pw>
- * @copyright 2017-19
+ * @copyright 2017-20
  * @license ISC
  */
 
@@ -85,7 +85,7 @@ class MarkupSitemap extends WireData implements Module
   public function ___install()
   {
     if (version_compare($this->config->version, '3.0.16') < 0) {
-      throw new WireException("Requires ProcessWire 3.0.16+ to run.");
+      throw new WireException('Requires ProcessWire 3.0.16+ to run.');
     }
   }
 
@@ -187,8 +187,7 @@ class MarkupSitemap extends WireData implements Module
 
     // Make sure that the root page exists.
     if (!$this->pages->get($rootPage) instanceof NullPage) {
-      // Get cached sitemap
-      $event->return = $this->getCached($rootPage);
+      $event->return = $this->getSitemap($rootPage);
       header('Content-Type: application/xml', true, 200);
 
       // Prevent further hooks. This stops
@@ -206,12 +205,14 @@ class MarkupSitemap extends WireData implements Module
    * @param string $rootPage
    * @return string
    */
-  protected function getCached(string $rootPage): string
+  protected function getSitemap(string $rootPage): string
   {
-    // Bail out early if debug mode is enabled
-    if ($this->config->debug) {
-      header('X-Cached-Sitemap: no');
-      return $this->buildNewSitemap($rootPage);
+    $sitemap = $this->buildNewSitemap($rootPage);
+
+    // Bail out early if debug mode is enabled, or if the
+    // cache rules require a fresh Sitemap for this request.
+    if ($this->requiresFreshSitemap()) {
+      return $sitemap;
     }
 
     // Cache settings
@@ -220,22 +221,29 @@ class MarkupSitemap extends WireData implements Module
     $cacheMethod = $this->cache_method ?: 'MarkupCache';
 
     // Attempt to fetch sitemap from cache
-    $cache = $cacheMethod == 'WireCache' ? $this->cache : $this->modules->MarkupCache;
+    $cache = $cacheMethod == 'WireCache'
+      ? $this->cache
+      : $this->modules->MarkupCache;
+
     $output = $cache->get($cacheKey, $cacheTtl);
 
     // If output is empty, generate and cache new sitemap
     if (empty($output)) {
-      header('X-Cached-Sitemap: no');
-      $output = $this->buildNewSitemap($rootPage);
+      header('X-Cached-Sitemap: no, next-request');
+
+      $output = $sitemap;
+
       if ($cacheMethod == 'WireCache') {
         $cache->save($cacheKey, $output, $cacheTtl);
       } else {
         $cache->save($output);
       }
+
       return $output;
     }
 
     header('X-Cached-Sitemap: yes');
+
     return $output;
   }
 
@@ -266,6 +274,33 @@ class MarkupSitemap extends WireData implements Module
     );
 
     return $valid;
+  }
+
+  /**
+   * Determines whether or not a fresh sitemap is required
+   * for the current request. A few factors are considered,
+   * such as debug mode, the cache method, and the update policy.
+   *
+   * @return boolean
+   */
+  protected function requiresFreshSitemap(): bool
+  {
+    if ($this->config->debug) {
+      header('X-Cached-Sitemap: no, debug');
+      return true;
+    }
+
+    if ($this->cache_method === 'None') {
+      header('X-Cached-Sitemap: no, disabled');
+      return true;
+    }
+
+    if ($this->cache_policy === 'guest' && !$this->user->isGuest()) {
+      header('X-Cached-Sitemap: no, guest-policy');
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -324,8 +359,8 @@ class MarkupSitemap extends WireData implements Module
     && !empty($this->sitemap_default_iso);
 
     return $usesDefaultIso
-    ? $this->sitemap_default_iso
-    : $this->pages->get(1)->localName($language);
+      ? $this->sitemap_default_iso
+      : $this->pages->get(1)->localName($language);
   }
 
   /**
