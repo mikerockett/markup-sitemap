@@ -199,7 +199,7 @@ class MarkupSitemapConfig extends ModuleConfig
     $cacheFieldset->add($this->buildInputField('Integer', [
       'name+id' => 'cache_ttl',
       'label' => $this->_('Cache Expiry (TTL)'),
-      'description' => $this->_('How long should the sitemap be cached for in seconds?'),
+      'description' => $this->_('How long should the sitemap be cached for (in seconds)?'),
       'notes' => $this->_('Default: **3600**'),
       'min' => 1,
       'columnWidth' => 33,
