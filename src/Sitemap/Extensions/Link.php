@@ -50,7 +50,7 @@ class Link implements VisitorInterface
 
     /**
      * Language code for the page.
-     * 
+     *
      * @return string
      */
     public function getHrefLang(): string
