@@ -36,7 +36,7 @@ trait ConfiguresTabs
       $inputFields = $event->return;
 
       // Get the saved options for this page
-      $pageOptions = $this->modules->getConfig($this, "o{$page->id}");
+      $pageOptions = $this->modules->getConfig($this, "o{$page->id}") ?: static::$defaultPageOptions;
 
       // Sitemap fieldset
       $sitemapFieldset = $this->buildInputField('Fieldset', [
