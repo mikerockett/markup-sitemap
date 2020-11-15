@@ -35,6 +35,18 @@ class MarkupSitemap extends WireData implements Module
   use Concerns\SupportsImages;
 
   /**
+   * Default page config array, used for comparison at save-time
+   */
+  private static $defaultPageOptions = [
+    'priority' => false,
+    'excludes' => [
+      'images' => false,
+      'page' => false,
+      'children' => false,
+    ],
+  ];
+
+  /**
    * Image fields: each field is mapped to the relavent
    * function for the Image sub-element
    */
@@ -398,7 +410,7 @@ class MarkupSitemap extends WireData implements Module
   protected function addPagesFromRoot(Page $page): void
   {
     // Get the saved options for this page
-    $pageSitemapOptions = $this->modules->getConfig($this, "o$page->id");
+    $pageSitemapOptions = $this->modules->getConfig($this, "o$page->id") ?: static::$defaultPageOptions;
 
     // If the template that this page belongs to is not using sitemap options
     // (per the module's current configuration), then we need to revert the keys

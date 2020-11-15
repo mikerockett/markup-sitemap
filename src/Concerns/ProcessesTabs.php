@@ -14,18 +14,6 @@ use ProcessWire\HookEvent;
 trait ProcessesTabs
 {
   /**
-   * Default page config array, used for comparison at save-time
-   */
-  private static $defaultPageOptions = [
-    'priority' => false,
-    'excludes' => [
-      'images' => false,
-      'page' => false,
-      'children' => false,
-    ],
-  ];
-
-  /**
    * Process Sitemap fields from Settings tab
    *
    * @param  HookEvent $event
