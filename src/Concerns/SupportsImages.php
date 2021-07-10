@@ -25,7 +25,7 @@ trait SupportsImages
    */
   protected function newImage($image, $language = null): Image
   {
-    $locImage = new Image($image->httpUrl);
+    $locImage = new Image($image->HTTPURL);
 
     foreach (static::$imageFields as $imageMetaMethod => $imageMetaValues) {
       foreach (explode('|', $imageMetaValues) as $imageMetaValue) {
