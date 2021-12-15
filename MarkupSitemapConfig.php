@@ -57,7 +57,7 @@ class MarkupSitemapConfig extends ModuleConfig
     // If saving, remove the sitemap cache to effect
     // possible changes in configuration.
     $this->input->post->submit_save_module &&
-    $this->removeSitemapCache() &&
+    $this->modules->get('MarkupSitemap')->removeSitemapCache() &&
     $this->message($this->_('Removed sitemap cache'));
 
     // Start inputfields
@@ -218,26 +218,9 @@ class MarkupSitemapConfig extends ModuleConfig
       'icon' => 'paypal',
     ]));
 
-    $this->config->scripts->add($this->urls->httpSiteModules . 'MarkupSitemap/assets/scripts/config.js');
+    $this->config->scripts->add("{$this->config->urls->MarkupSitemap}/assets/scripts/config.js");
 
     return $inputfields;
-  }
-
-  /**
-   * Remove the sitemap cache
-   *
-   * @return bool
-   */
-  protected function removeSitemapCache(): bool
-  {
-    try {
-      $cachePath = $this->config->paths->cache . 'MarkupCache/MarkupSitemap';
-      $removed = (bool) CacheFile::removeAll($cachePath, true);
-    } catch (\Exception $e) {
-      $removed = false;
-    }
-
-    return $removed;
   }
 
   /**
