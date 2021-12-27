@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Numeric timestamp to DateTime helper
- *
- * @author  Mike Rockett
- * @license ISC
- */
-
 namespace Rockett\Support;
 
 use DateTime;

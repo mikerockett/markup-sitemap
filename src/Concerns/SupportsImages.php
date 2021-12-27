@@ -1,14 +1,5 @@
 <?php
 
-/**
- * Field helpers for ProcessWire
- * Allows field-building on the fly.
- * Add namespace and `use BuildsInputFields` in your class.
- *
- * @author  Mike Rockett
- * @license ISC
- */
-
 namespace Rockett\Concerns;
 
 use ProcessWire\Pageimage;

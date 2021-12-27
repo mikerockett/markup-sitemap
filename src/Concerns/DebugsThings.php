@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Debugging helpers.
- *
- * @author  Mike Rockett
- * @license ISC
- */
-
 namespace Rockett\Concerns;
 
 trait DebugsThings
@@ -33,7 +26,7 @@ trait DebugsThings
     $this->header();
 
     array_map(
-      function ($mixed) { var_dump($mixed); },
+      'var_dump',
       func_get_args()
     );
   }
@@ -94,7 +87,7 @@ trait DebugsThings
     $this->header();
 
     array_map(
-      function ($mixed) { print_r($mixed); },
+      'print_r',
       func_get_args()
     );
   }

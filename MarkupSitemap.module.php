@@ -5,7 +5,6 @@
  * Module class
  *
  * @author Mike Rockett <mike@rockett.pw>
- * @copyright 2017-20
  * @license ISC
  */
 
@@ -14,6 +13,7 @@ wire('classLoader')->addNamespace('Thepixeldeveloper\Sitemap', __DIR__ . '/src/S
 wire('classLoader')->addNamespace('Rockett\Concerns', __DIR__ . '/src/Concerns');
 wire('classLoader')->addNamespace('Rockett\Support', __DIR__ . '/src/Support');
 
+use Exception;
 use ProcessWire\Language;
 use ProcessWire\Page;
 use ProcessWire\WireException;
@@ -59,17 +59,20 @@ class MarkupSitemap extends WireData implements Module
 
   /**
    * Sitemap URI
+   *
+   * @var string
    */
   const sitemapUri = '/sitemap.xml';
 
   /**
    * The name of the additional pages hook
+   *
+   * @var string
    */
   const getAdditionalPages = 'MarkupSitemap::getAdditionalPages';
 
   /**
    * Determine whether language support hooks have been added.
-   *
    * @var bool
    */
   private static $languageSupportHooksApplied;
@@ -90,6 +93,7 @@ class MarkupSitemap extends WireData implements Module
 
   /**
    * The path of the sitemap cache
+   *
    * @var string
    */
   private $cachePath;
@@ -175,6 +179,7 @@ class MarkupSitemap extends WireData implements Module
           wire('modules')->LanguageSupportPageNames->{$pageHookFunction}($event);
         });
       }
+
       static::$languageSupportHooksApplied = true;
     }
   }
@@ -209,25 +214,22 @@ class MarkupSitemap extends WireData implements Module
       $event->return = $this->getSitemap($rootPage);
       header('Content-Type: application/xml', true, 200);
 
-      // Prevent further hooks. This stops
-      // SystemNotifications from displaying a 404 event
-      // when /sitemap.xml is requested. Additionally,
-      // it prevents further modification to the sitemap.
+      // Prevent further hooks. This stops SystemNotifications from
+      // displaying a 404 event when /sitemap.xml is requested.
+      // Additionally, it prevents further modification to the sitemap.
       $event->replace = true;
       $event->cancelHooks = true;
     }
   }
 
   /**
-   * Remove the sitemap cache
-   * CHANGED: Moved to module, made public to be called externally
+   * Remove the sitemap cache.
    *
    * @return bool
    */
   public function removeSitemapCache(): bool
   {
     // Cache settings
-    $cacheTtl = $this->cache_ttl ?: 3600;
     $cacheKey = 'MarkupSitemap';
     $cacheMethod = $this->cache_method ?: 'MarkupCache';
 
@@ -236,25 +238,20 @@ class MarkupSitemap extends WireData implements Module
       ? $this->cache
       : $this->modules->MarkupCache;
 
-    $sitemapIsCached = !!$cache->get($cacheKey);
+    $isCached = !!$cache->get($cacheKey);
 
     // If the cache exists and is WireCache, destroy it
-    if ($sitemapIsCached && $cacheMethod === 'WireCache') {
+    if ($isCached && $cacheMethod === 'WireCache') {
       $removed = (bool) $cache->deleteFor($cacheKey);
     }
 
     // If the cache exists and is MarkupCache, destroy it
-    if ($sitemapIsCached && $cacheMethod === 'MarkupCache') {
+    if ($isCached && $cacheMethod === 'MarkupCache') {
       try {
         $removed = (bool) CacheFile::removeAll($this->cachePath, true);
-      } catch (\Exception $e) {
+      } catch (Exception $e) {
         $removed = false;
       }
-    }
-
-    // If the cache doesn't exist, return true since for all intents and purposes it was cleared
-    if (!$sitemapIsCached) {
-      $removed = true;
     }
 
     return $removed;
@@ -329,8 +326,7 @@ class MarkupSitemap extends WireData implements Module
    */
   protected function isValidRequest(): bool
   {
-    $valid = (bool) (
-      $this->requestUri !== null &&
+    $valid = (bool) ($this->requestUri !== null &&
       strlen($this->requestUri) - strlen(self::sitemapUri) === strrpos($this->requestUri, self::sitemapUri)
     );
 
@@ -415,9 +411,9 @@ class MarkupSitemap extends WireData implements Module
   protected function getLanguageIsoName(Language $language): string
   {
     $usesDefaultIso = $language->isDefault()
-    && $this->pages->get(1)->name === 'home'
-    && !$this->modules->LanguageSupportPageNames->useHomeSegment
-    && !empty($this->sitemap_default_iso);
+      && $this->pages->get(1)->name === 'home'
+      && !$this->modules->LanguageSupportPageNames->useHomeSegment
+      && !empty($this->sitemap_default_iso);
 
     return $usesDefaultIso
       ? $this->sitemap_default_iso
@@ -465,9 +461,11 @@ class MarkupSitemap extends WireData implements Module
     // (per the module's current configuration), then we need to revert the keys
     // in $pageSitemapOptions to their defaults so as to prevent their
     // saved options from being used in this cycle.
-    if ($this->sitemap_include_templates !== null
+    if (
+      $this->sitemap_include_templates !== null
       && !in_array($page->template->name, $this->sitemap_include_templates)
-      && is_array($pageSitemapOptions)) {
+      && is_array($pageSitemapOptions)
+    ) {
       array_walk_recursive($pageSitemapOptions, function (&$value) {
         $value = false;
       });
@@ -626,8 +624,10 @@ class MarkupSitemap extends WireData implements Module
    */
   protected function getStylesheetUrl(): string
   {
-    if ($this->sitemap_stylesheet_custom
-      && filter_var($this->sitemap_stylesheet_custom, FILTER_VALIDATE_URL)) {
+    if (
+      $this->sitemap_stylesheet_custom
+      && filter_var($this->sitemap_stylesheet_custom, FILTER_VALIDATE_URL)
+    ) {
       return $this->sitemap_stylesheet_custom;
     }
 

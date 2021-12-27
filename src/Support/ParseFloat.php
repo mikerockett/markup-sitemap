@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Float to string helper.
- *
- * @author  Mike Rockett
- * @license ISC
- */
-
 namespace Rockett\Support;
 
 final class ParseFloat

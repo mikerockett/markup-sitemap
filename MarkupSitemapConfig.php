@@ -5,7 +5,6 @@
  * Module config class
  *
  * @author Mike Rockett <mike@rockett.pw>
- * @copyright 2017-20
  * @license ISC
  */
 
@@ -56,9 +55,9 @@ class MarkupSitemapConfig extends ModuleConfig
 
     // If saving, remove the sitemap cache to effect
     // possible changes in configuration.
-    $this->input->post->submit_save_module &&
-    $this->modules->get('MarkupSitemap')->removeSitemapCache() &&
-    $this->message($this->_('Removed sitemap cache'));
+    $this->input->post->submit_save_module
+      && $this->modules->get('MarkupSitemap')->removeSitemapCache()
+      && $this->message($this->_('Removed sitemap cache'));
 
     // Start inputfields
     $inputfields = parent::getInputfields();

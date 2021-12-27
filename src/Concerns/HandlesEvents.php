@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Direct concerns for building out tabs.
- *
- * @author  Mike Rockett
- * @license ISC
- */
 
 namespace Rockett\Concerns;
 

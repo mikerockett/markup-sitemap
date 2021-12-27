@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Direct concerns for processing tabs.
- *
- * @author  Mike Rockett
- * @license ISC
- */
-
 namespace Rockett\Concerns;
 
 use ProcessWire\HookEvent;
@@ -22,13 +15,14 @@ trait ProcessesTabs
   public function processSettingsTab(HookEvent $event): void
   {
     // Prevent recursion
-    if (($level = $event->arguments(1)) > 0) {
+    if ($event->arguments(1) > 0) {
       return;
     }
 
     // Get the current page and stop if we're working
     // with an admin or trashed page.
     $page = $event->object->getPage();
+
     if ($page->matches("has_parent={$this->config->adminRootPageID}|{$this->config->trashPageID}")) {
       return;
     }
