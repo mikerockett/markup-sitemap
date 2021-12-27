@@ -89,6 +89,12 @@ class MarkupSitemap extends WireData implements Module
   protected $urlSet;
 
   /**
+   * The path of the sitemap cache
+   * @var string
+   */
+  private $cachePath;
+
+  /**
    * Module installer
    * Requires ProcessWire 3.0.16+
    *
@@ -108,6 +114,7 @@ class MarkupSitemap extends WireData implements Module
   public function __construct()
   {
     $this->requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
+    $this->cachePath = $this->config->paths->cache . 'MarkupCache/MarkupSitemap';
   }
 
   /**
@@ -209,6 +216,48 @@ class MarkupSitemap extends WireData implements Module
       $event->replace = true;
       $event->cancelHooks = true;
     }
+  }
+
+  /**
+   * Remove the sitemap cache
+   * CHANGED: Moved to module, made public to be called externally
+   *
+   * @return bool
+   */
+  public function removeSitemapCache(): bool
+  {
+    // Cache settings
+    $cacheTtl = $this->cache_ttl ?: 3600;
+    $cacheKey = 'MarkupSitemap';
+    $cacheMethod = $this->cache_method ?: 'MarkupCache';
+
+    // Attempt to fetch sitemap from cache
+    $cache = $cacheMethod == 'WireCache'
+      ? $this->cache
+      : $this->modules->MarkupCache;
+
+    $sitemapIsCached = !!$cache->get($cacheKey);
+
+    // If the cache exists and is WireCache, destroy it
+    if ($sitemapIsCached && $cacheMethod === 'WireCache') {
+      $removed = (bool) $cache->deleteFor($cacheKey);
+    }
+
+    // If the cache exists and is MarkupCache, destroy it
+    if ($sitemapIsCached && $cacheMethod === 'MarkupCache') {
+      try {
+        $removed = (bool) CacheFile::removeAll($this->cachePath, true);
+      } catch (\Exception $e) {
+        $removed = false;
+      }
+    }
+
+    // If the cache doesn't exist, return true since for all intents and purposes it was cleared
+    if (!$sitemapIsCached) {
+      $removed = true;
+    }
+
+    return $removed;
   }
 
   /**
@@ -582,7 +631,7 @@ class MarkupSitemap extends WireData implements Module
       return $this->sitemap_stylesheet_custom;
     }
 
-    return $this->urls->httpSiteModules . 'MarkupSitemap/assets/sitemap-stylesheet.xsl';
+    return "{$this->config->urls->MarkupSitemap}/assets/sitemap-stylesheet.xsl";
   }
 
   /**
@@ -614,5 +663,4 @@ class MarkupSitemap extends WireData implements Module
 
     return $return;
   }
-
 }
