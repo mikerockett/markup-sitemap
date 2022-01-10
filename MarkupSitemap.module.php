@@ -232,6 +232,7 @@ class MarkupSitemap extends WireData implements Module
     // Cache settings
     $cacheKey = 'MarkupSitemap';
     $cacheMethod = $this->cache_method ?: 'MarkupCache';
+    $removed = false;
 
     // Attempt to fetch sitemap from cache
     $cache = $cacheMethod == 'WireCache'
